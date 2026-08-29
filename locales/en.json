@@ -1,0 +1,20 @@
+{
+  "common": {
+    "no_clan_linked": "No clan is linked to this server. Add one with `/setup clan`.",
+    "invalid_tag": "That doesn't look like a valid tag.",
+    "not_found": "Nothing found for that tag.",
+    "linked": "Linked successfully.",
+    "unlinked": "Unlinked successfully."
+  },
+  "command": {
+    "ping": {
+      "description": "Check the bot's latency."
+    },
+    "player": {
+      "description": "Show a player's profile and stats."
+    },
+    "clan": {
+      "description": "Show a clan's overview and details."
+    }
+  }
+}
