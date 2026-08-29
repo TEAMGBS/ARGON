@@ -8,7 +8,9 @@ export class RedisService {
   private connected = false;
 
   public constructor() {
-    this.client = createClient({ url: process.env.REDIS_URL || 'redis://localhost:6379' });
+    // Railway's Redis plugin exposes REDIS_URL; also accept the private-network variant.
+    const url = process.env.REDIS_URL || process.env.REDIS_PRIVATE_URL || 'redis://localhost:6379';
+    this.client = createClient({ url });
     this.client.on('error', (err) => this.log.error(err));
   }
 

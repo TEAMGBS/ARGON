@@ -20,7 +20,9 @@ export class Database {
   private readonly log = new Logger('Database');
 
   public async connect(): Promise<void> {
-    const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
+    // Accept the common Railway/hosted variable names too (Railway's MongoDB plugin exposes MONGO_URL).
+    const uri =
+      process.env.MONGODB_URI || process.env.MONGO_URL || process.env.MONGO_PUBLIC_URL || 'mongodb://localhost:27017';
     const dbName = process.env.MONGODB_DB_NAME || 'argon';
     this.client = new MongoClient(uri);
     await this.client.connect();
