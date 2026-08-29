@@ -53,9 +53,20 @@ adding one file** — see [Adding a command](#adding-a-command).
 - **Node.js >= 22**
 - **MongoDB** and **Redis** (a `docker-compose.yml` is provided for both)
 - A **Discord bot token** + application id — https://discord.com/developers/applications
-- A **Clash of Clans API token** — https://developer.clashofclans.com
-  (keys are IP-locked; alternatively set `CLASH_API_EMAIL` / `CLASH_API_PASSWORD` and the bot mints
-  keys for the current host automatically)
+- A **Clash of Clans developer account** — https://developer.clashofclans.com
+
+### Clash of Clans API: just use your email + password
+
+You do **not** need to create an API key by hand. Set `CLASH_API_EMAIL` and `CLASH_API_PASSWORD`
+(your developer-site login) and on every startup the bot:
+
+1. logs in to the developer site,
+2. detects the outbound IP of the machine it's running on, and
+3. creates or rotates an **IP-locked API key** for that exact IP automatically.
+
+This is why it's the right choice for Railway and other hosts where the IP can change between
+deploys — the key follows the new IP with zero manual steps. (Static `CLASH_API_TOKENS` are still
+supported for fixed-IP boxes.)
 
 ## Setup
 
@@ -83,6 +94,32 @@ npm start
 # or the whole stack:
 docker compose up -d --build
 ```
+
+## Deploying on Railway
+
+1. **New Project → Deploy from GitHub repo** and pick this repo. Railway reads `railway.json`
+   (build: `npm run build`, start: `npm start`) automatically.
+2. **Add a MongoDB database** and **a Redis database** to the project (Railway → *New* → *Database*).
+   They expose `MONGO_URL` and `REDIS_URL`; the bot reads those names automatically, so you don't have
+   to wire them up manually. (If you use Railway's variable references instead, set `MONGODB_URI`
+   and `REDIS_URL`.)
+3. On the **bot service → Variables**, add:
+
+   | Variable | Value |
+   | --- | --- |
+   | `DISCORD_TOKEN` | your bot token |
+   | `CLIENT_ID` | your application id |
+   | `CLASH_API_EMAIL` | your developer.clashofclans.com email |
+   | `CLASH_API_PASSWORD` | your developer.clashofclans.com password |
+   | `DEV_GUILD_ID` | *(optional)* a server id for instant command registration |
+
+   You do **not** need `CLASH_API_TOKENS` — the email/password login mints an IP-locked key for
+   Railway's IP on each deploy (see above).
+4. **Register the slash commands once** (Railway's shell, or locally with the same env):
+   `npm run deploy`. After that, every deploy just runs the bot.
+
+That's the whole setup — no manual API-key creation, and redeploys that change Railway's IP are
+handled for you.
 
 ## Adding a command
 
