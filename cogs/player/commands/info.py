@@ -16,6 +16,7 @@ from utils.emojis import (
     get_th_emoji,
 )
 from utils.resolver import resolve_player
+from utils.units import home_units
 
 
 async def info(interaction: discord.Interaction, tag: str = None, user: discord.User = None):
@@ -40,11 +41,11 @@ async def info(interaction: discord.Interaction, tag: str = None, user: discord.
         role_name = role.in_game_name if role else "Member"
         embed.add_field(name="Clan", value=f"{E_CLAN} {player.clan.name} ({player.clan.tag}) — {role_name}", inline=False)
 
-    heroes = [h for h in player.heroes if h.is_home_base]
+    heroes = home_units(player, "heroes")
     if heroes:
         embed.add_field(
             name="Heroes",
-            value="\n".join(f"{E_HERO} {h.name}: **{h.level}**/{h.max_level}" for h in heroes),
+            value="\n".join(f"{E_HERO} {h['name']}: **{h['level']}**/{h['maxLevel']}" for h in heroes),
             inline=False,
         )
 
