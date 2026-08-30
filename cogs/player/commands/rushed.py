@@ -9,6 +9,7 @@ game-data IndexError on newly added levels.
 import discord
 
 from utils.embeds import base_embed, error_embed
+from utils.emojis import get_unit_emoji
 from utils.helpers import pad, pad_start
 from utils.resolver import resolve_player
 from utils.units import home_units
@@ -29,9 +30,12 @@ async def rushed(interaction: discord.Interaction, tag: str = None, user: discor
     if not rushed_units:
         embed.description = "No significantly under-levelled units detected. 👍"
     else:
-        embed.description = "\n".join(
-            f"`{pad(u['name'], 18)} {pad_start(u['level'], 2)}/{pad_start(u['maxLevel'], 2)}`" for u in rushed_units
-        )[:4000]
+        lines = []
+        for u in rushed_units:
+            e = get_unit_emoji(u["name"])
+            prefix = f"{e} " if e else ""
+            lines.append(f"{prefix}`{pad(u['name'], 16)} {pad_start(u['level'], 2)}/{pad_start(u['maxLevel'], 2)}`")
+        embed.description = "\n".join(lines)[:4000]
         embed.set_footer(text="Heuristic estimate, units below 60% of current max level.")
 
     await interaction.followup.send(embed=embed)

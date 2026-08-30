@@ -8,7 +8,7 @@ from discord.ext import commands as ext_commands
 from config import SUPPORT_SERVER
 from database.db import get_pool
 from utils.embeds import base_embed, error_embed, success_embed
-from utils.emojis import E_CORRECT, E_TROPHY, E_TOWNHALL
+from utils.emojis import E_CORRECT, E_TROPHY, get_th_emoji
 from utils.resolver import all_tags_for_user
 
 _ALL_TZ = sorted(available_timezones())
@@ -79,7 +79,7 @@ class util(ext_commands.Cog):
                 continue
             mark = E_CORRECT if row["verified"] else ""
             clan = f" • {p.clan.name}" if p.clan else ""
-            lines.append(f"{mark} {E_TOWNHALL}TH{p.town_hall} **{p.name}** ({p.tag}), {E_TROPHY} {p.trophies}{clan}")
+            lines.append(f"{mark} {get_th_emoji(p.town_hall)} **{p.name}** ({p.tag}), {E_TROPHY} {p.trophies}{clan}")
 
         embed = await base_embed(interaction, title=f"{target.display_name}, Profile")
         embed.description = "\n".join(lines)[:4000] or "_Could not load any accounts._"

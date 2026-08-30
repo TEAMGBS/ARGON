@@ -5,7 +5,7 @@ import asyncio
 import discord
 
 from utils.embeds import base_embed, error_embed
-from utils.emojis import E_TROOP
+from utils.emojis import E_TROOP, get_unit_emoji
 from utils.resolver import resolve_clan
 from utils.units import active_super_troops
 
@@ -42,7 +42,7 @@ async def boosts(interaction: discord.Interaction, tag: str = None):
         blocks = []
         for troop_name, names in boost_map.items():
             listing = "\n".join(f"• {n}" for n in names)
-            blocks.append(f"{E_TROOP} **{troop_name}**, {len(names)}\n{listing}")
+            blocks.append(f"{get_unit_emoji(troop_name) or E_TROOP} **{troop_name}**, {len(names)}\n{listing}")
         embed.description = "\n\n".join(blocks)[:4000]
 
     await interaction.followup.send(embed=embed)
