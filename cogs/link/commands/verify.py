@@ -1,4 +1,4 @@
-"""/link verify — prove account ownership with the in-game API token."""
+"""/link verify, prove account ownership with the in-game API token."""
 
 import discord
 

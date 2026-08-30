@@ -1,4 +1,4 @@
-"""/player info — profile card."""
+"""/player info, profile card."""
 
 import discord
 
@@ -39,7 +39,7 @@ async def info(interaction: discord.Interaction, tag: str = None, user: discord.
     if player.clan is not None:
         role = getattr(player, "role", None)
         role_name = role.in_game_name if role else "Member"
-        embed.add_field(name="Clan", value=f"{E_CLAN} {player.clan.name} ({player.clan.tag}) — {role_name}", inline=False)
+        embed.add_field(name="Clan", value=f"{E_CLAN} {player.clan.name} ({player.clan.tag}), {role_name}", inline=False)
 
     heroes = home_units(player, "heroes")
     if heroes:

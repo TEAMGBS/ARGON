@@ -1,4 +1,4 @@
-"""/war lineup — both sides ordered by map position."""
+"""/war lineup, both sides ordered by map position."""
 
 import coc
 import discord
@@ -35,7 +35,7 @@ async def lineup(interaction: discord.Interaction, tag: str = None):
         await interaction.followup.send(embed=error_embed(f"{clan.name} is not currently in a war."))
         return
 
-    embed = await base_embed(interaction, title=f"{war.clan.name} vs {war.opponent.name} — Lineup")
+    embed = await base_embed(interaction, title=f"{war.clan.name} vs {war.opponent.name}, Lineup")
     embed.add_field(name=war.clan.name, value=_side(war.clan.members), inline=True)
     embed.add_field(name=war.opponent.name, value=_side(war.opponent.members), inline=True)
     await interaction.followup.send(embed=embed)

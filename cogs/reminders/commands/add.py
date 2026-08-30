@@ -1,4 +1,4 @@
-"""/reminders add — create a war reminder."""
+"""/reminders add, create a war reminder."""
 
 import discord
 

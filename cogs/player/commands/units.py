@@ -1,4 +1,4 @@
-"""/player units — troop, spell and hero levels."""
+"""/player units, troop, spell and hero levels."""
 
 import discord
 
@@ -24,7 +24,7 @@ async def units(interaction: discord.Interaction, tag: str = None, user: discord
         await interaction.followup.send(embed=error_embed(str(err)))
         return
 
-    embed = await base_embed(interaction, title=f"{player.name} ({player.tag}) — Units")
+    embed = await base_embed(interaction, title=f"{player.name} ({player.tag}), Units")
     embed.add_field(name=f"{E_HERO} Heroes", value=_table(home_units(player, "heroes")), inline=False)
     embed.add_field(name=f"{E_TROOP} Troops", value=_table(home_units(player, "troops")), inline=False)
     embed.add_field(name=f"{E_SPELL} Spells", value=_table(home_units(player, "spells")), inline=False)

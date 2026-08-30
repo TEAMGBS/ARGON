@@ -1,4 +1,4 @@
-"""/reminders list — list war reminders."""
+"""/reminders list, list war reminders."""
 
 import discord
 

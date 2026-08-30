@@ -1,4 +1,4 @@
-"""/clan boosts — active Super Troop boosts among clan members."""
+"""/clan boosts, active Super Troop boosts among clan members."""
 
 import asyncio
 
@@ -35,14 +35,14 @@ async def boosts(interaction: discord.Interaction, tag: str = None):
         for troop in active_super_troops(p):
             boost_map.setdefault(troop["name"], []).append(p.name)
 
-    embed = await base_embed(interaction, title=f"{clan.name} ({clan.tag}) — Active Boosts")
+    embed = await base_embed(interaction, title=f"{clan.name} ({clan.tag}), Active Boosts")
     if not boost_map:
         embed.description = "No active Super Troop boosts right now."
     else:
         blocks = []
         for troop_name, names in boost_map.items():
             listing = "\n".join(f"• {n}" for n in names)
-            blocks.append(f"{E_TROOP} **{troop_name}** — {len(names)}\n{listing}")
+            blocks.append(f"{E_TROOP} **{troop_name}**, {len(names)}\n{listing}")
         embed.description = "\n\n".join(blocks)[:4000]
 
     await interaction.followup.send(embed=embed)

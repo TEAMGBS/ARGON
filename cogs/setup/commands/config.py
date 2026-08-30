@@ -1,4 +1,4 @@
-"""/config — per-server settings (embed color, timezone)."""
+"""/config, per-server settings (embed color, timezone)."""
 
 import discord
 

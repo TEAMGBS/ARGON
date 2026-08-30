@@ -1,4 +1,4 @@
-"""/war remaining — members with attacks left."""
+"""/war remaining, members with attacks left."""
 
 import coc
 import discord
@@ -35,9 +35,9 @@ async def remaining(interaction: discord.Interaction, tag: str = None):
     for m in sorted(war.clan.members, key=lambda x: x.map_position):
         used = len(m.attacks)
         if used < per_member:
-            laggards.append(f"{E_SWORD} **{m.name}** — {per_member - used} left")
+            laggards.append(f"{E_SWORD} **{m.name}**, {per_member - used} left")
 
-    embed = await base_embed(interaction, title=f"{war.clan.name} — Remaining Attacks")
+    embed = await base_embed(interaction, title=f"{war.clan.name}, Remaining Attacks")
     embed.description = "\n".join(laggards)[:4000] if laggards else "All attacks used! 🎉"
     if war.state == "preparation":
         embed.add_field(name="Battle day", value=discord_relative(war.start_time.time), inline=False)

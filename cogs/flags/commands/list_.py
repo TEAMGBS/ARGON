@@ -1,4 +1,4 @@
-"""/flag list — list flagged players."""
+"""/flag list, list flagged players."""
 
 import discord
 
@@ -20,6 +20,6 @@ async def flag_list(interaction: discord.Interaction):
 
     embed = await base_embed(interaction, title="Flagged Players")
     embed.description = "\n".join(
-        f"{E_WRONG} **{r['name'] or r['tag']}** `{r['tag']}` — {r['reason']} (by <@{r['flagged_by']}>)" for r in rows
+        f"{E_WRONG} **{r['name'] or r['tag']}** `{r['tag']}`, {r['reason']} (by <@{r['flagged_by']}>)" for r in rows
     )[:4000]
     await interaction.followup.send(embed=embed)

@@ -1,4 +1,4 @@
-"""/player upgrades — units not yet at their current max level."""
+"""/player upgrades, units not yet at their current max level."""
 
 import discord
 
@@ -25,7 +25,7 @@ async def upgrades(interaction: discord.Interaction, tag: str = None, user: disc
         await interaction.followup.send(embed=error_embed(str(err)))
         return
 
-    embed = await base_embed(interaction, title=f"{player.name} ({player.tag}) — Upgrades Available")
+    embed = await base_embed(interaction, title=f"{player.name} ({player.tag}), Upgrades Available")
     embed.add_field(name="Heroes", value=_pending(home_units(player, "heroes")), inline=False)
     embed.add_field(name="Troops", value=_pending(home_units(player, "troops")), inline=False)
     embed.add_field(name="Spells", value=_pending(home_units(player, "spells")), inline=False)

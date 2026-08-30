@@ -1,4 +1,4 @@
-"""/war log — recent war results."""
+"""/war log, recent war results."""
 
 import coc
 import discord
@@ -36,8 +36,8 @@ async def log(interaction: discord.Interaction, tag: str = None):
     for w in entries:
         opp = w.opponent.name if w.opponent and w.opponent.name else "Unknown (CWL)"
         opp_stars = w.opponent.stars if w.opponent else 0
-        lines.append(f"{icon(w.result)} vs **{opp}** — {E_STAR} {w.clan.stars}-{opp_stars} • {w.clan.destruction:.1f}%")
+        lines.append(f"{icon(w.result)} vs **{opp}**, {E_STAR} {w.clan.stars}-{opp_stars} • {w.clan.destruction:.1f}%")
 
-    embed = await base_embed(interaction, title=f"{clan.name} ({clan.tag}) — War Log")
+    embed = await base_embed(interaction, title=f"{clan.name} ({clan.tag}), War Log")
     embed.description = "\n".join(lines)[:4000]
     await interaction.followup.send(embed=embed)

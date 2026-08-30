@@ -1,4 +1,4 @@
-"""/war info — current war status."""
+"""/war info, current war status."""
 
 import coc
 import discord

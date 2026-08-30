@@ -1,4 +1,4 @@
-"""/flag remove — remove a flag."""
+"""/flag remove, remove a flag."""
 
 import discord
 

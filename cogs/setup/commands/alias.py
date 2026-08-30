@@ -1,4 +1,4 @@
-"""/alias add|remove|list — short names that stand in for clan tags."""
+"""/alias add|remove|list, short names that stand in for clan tags."""
 
 import discord
 

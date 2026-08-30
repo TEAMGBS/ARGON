@@ -55,7 +55,7 @@ class ServerSetup(ext_commands.Cog):
         bot.tree.add_command(self.setup_group)
         bot.tree.add_command(self.alias_group)
 
-    # /config — registered automatically when the cog is added.
+    # /config, registered automatically when the cog is added.
     @app_commands.command(name="config", description="View or change server settings")
     @app_commands.describe(color="Embed color hex, e.g. 5865F2", timezone="Server timezone id, e.g. Europe/London")
     @app_commands.default_permissions(manage_guild=True)

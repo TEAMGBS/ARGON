@@ -1,4 +1,4 @@
-"""/clan search — find public clans by name."""
+"""/clan search, find public clans by name."""
 
 import discord
 
@@ -19,9 +19,9 @@ async def search(interaction: discord.Interaction, name: str):
         return
 
     lines = [
-        f"{E_CLAN} **{c.name}** ({c.tag}) — Lv {c.level} • {E_PEOPLE} {c.member_count}/50 • {E_TROPHY} {c.points}"
+        f"{E_CLAN} **{c.name}** ({c.tag}), Lv {c.level} • {E_PEOPLE} {c.member_count}/50 • {E_TROPHY} {c.points}"
         for c in results
     ]
-    embed = await base_embed(interaction, title=f'Clan search — "{name}"')
+    embed = await base_embed(interaction, title=f'Clan search, "{name}"')
     embed.description = "\n".join(lines)[:4000]
     await interaction.followup.send(embed=embed)

@@ -1,4 +1,4 @@
-"""/link add — link a player tag to a Discord user."""
+"""/link add, link a player tag to a Discord user."""
 
 import discord
 

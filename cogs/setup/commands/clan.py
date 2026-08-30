@@ -1,4 +1,4 @@
-"""/setup clan|remove|list — link clans to this server."""
+"""/setup clan|remove|list, link clans to this server."""
 
 import discord
 

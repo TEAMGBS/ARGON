@@ -1,4 +1,4 @@
-"""ARGON — a ClashPerk-style Clash of Clans Discord bot.
+"""ARGON, a ClashPerk-style Clash of Clans Discord bot.
 
 Boot order: connect to the database, log into the Clash of Clans API (which mints
 an IP-locked key for this host automatically), load every cog, then start the bot
@@ -112,7 +112,7 @@ async def main():
         print(f"❌ Database connection failed:\n{traceback.format_exc()}")
         return
 
-    # 3) Clash of Clans API — email/password login mints an IP-locked key for
+    # 3) Clash of Clans API, email/password login mints an IP-locked key for
     #    this host and re-issues it when the IP changes (Railway-friendly).
     print("⏳ Logging into the Clash of Clans API...")
     try:
