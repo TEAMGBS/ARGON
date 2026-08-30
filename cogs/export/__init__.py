@@ -26,7 +26,7 @@ async def members(interaction: discord.Interaction, tag: str = None):
         )
     buffer.seek(0)
     file = discord.File(io.BytesIO(buffer.getvalue().encode("utf-8")), filename=f"{clan.tag.strip('#')}-members.csv")
-    await interaction.followup.send(content=f"{clan.name} — {clan.member_count} members exported.", file=file)
+    await interaction.followup.send(content=f"{clan.name}, {clan.member_count} members exported.", file=file)
 
 
 class export(ext_commands.Cog):

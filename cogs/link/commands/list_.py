@@ -1,4 +1,4 @@
-"""/link list — show a user's linked accounts."""
+"""/link list, show a user's linked accounts."""
 
 import discord
 
@@ -23,6 +23,6 @@ async def list_(interaction: discord.Interaction, user: discord.User = None):
         default = " _(default)_" if i == 0 else ""
         lines.append(f"{mark} **{row['name'] or row['tag']}** `{row['tag']}`{default}")
 
-    embed = await base_embed(interaction, title=f"{target.display_name} — Linked Accounts")
+    embed = await base_embed(interaction, title=f"{target.display_name}, Linked Accounts")
     embed.description = "\n".join(lines)
     await interaction.followup.send(embed=embed)

@@ -1,4 +1,4 @@
-"""/cwl round — the clan's current CWL matchup."""
+"""/cwl round, the clan's current CWL matchup."""
 
 import coc
 import discord
@@ -43,7 +43,7 @@ async def round(interaction: discord.Interaction, tag: str = None):
     us = latest.clan if latest.clan.tag == clan.tag else latest.opponent
     them = latest.opponent if latest.clan.tag == clan.tag else latest.clan
 
-    embed = await base_embed(interaction, title=f"{us.name} vs {them.name} — CWL Round")
+    embed = await base_embed(interaction, title=f"{us.name} vs {them.name}, CWL Round")
     embed.description = (
         f"**State:** {latest.state}\n"
         f"{E_STAR} {us.stars} - {them.stars}\n"

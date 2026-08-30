@@ -1,4 +1,4 @@
-"""/setup log — enable a member/donation/feed log for a clan in a channel."""
+"""/setup log, enable a member/donation/feed log for a clan in a channel."""
 
 import discord
 

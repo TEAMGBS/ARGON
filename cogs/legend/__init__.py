@@ -27,7 +27,7 @@ class legend(ext_commands.Cog):
             return
 
         stats = player.legend_statistics
-        embed = await base_embed(interaction, title=f"{player.name} ({player.tag}) — Legend League")
+        embed = await base_embed(interaction, title=f"{player.name} ({player.tag}), Legend League")
 
         league_name = player.league.name if player.league else "Unranked"
         if league_name != "Legend League" and stats is None:

@@ -1,4 +1,4 @@
-"""/link remove — unlink a player tag."""
+"""/link remove, unlink a player tag."""
 
 import discord
 

@@ -1,4 +1,4 @@
-"""/cwl roster — the CWL season's participating clans."""
+"""/cwl roster, the CWL season's participating clans."""
 
 import coc
 import discord
@@ -27,9 +27,9 @@ async def roster(interaction: discord.Interaction, tag: str = None):
         return
 
     clans = sorted(group.clans, key=lambda c: c.level, reverse=True)
-    lines = [f"`{pad_start(i, 2)}` {E_CLAN} **{c.name}** ({c.tag}) — Lv {c.level}" for i, c in enumerate(clans, 1)]
+    lines = [f"`{pad_start(i, 2)}` {E_CLAN} **{c.name}** ({c.tag}), Lv {c.level}" for i, c in enumerate(clans, 1)]
 
-    embed = await base_embed(interaction, title=f"{clan.name} — CWL Season ({group.season})")
+    embed = await base_embed(interaction, title=f"{clan.name}, CWL Season ({group.season})")
     embed.description = "\n".join(lines)[:4000]
     embed.set_footer(text=f"{len(group.clans)} clans • {group.number_of_rounds} rounds")
     await interaction.followup.send(embed=embed)

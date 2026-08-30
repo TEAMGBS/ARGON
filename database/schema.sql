@@ -2,7 +2,7 @@
 --
 -- Applied in full on every startup by database/db.py (conn.execute(schema)).
 -- Everything uses IF NOT EXISTS, so a fresh Supabase database is built entirely
--- from this one file and re-running it against an existing database is safe —
+-- from this one file and re-running it against an existing database is safe -
 -- no follow-up migration commands required.
 --
 -- Discord ids are stored as BIGINT; Clash of Clans tags as TEXT (with the '#').

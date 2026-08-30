@@ -22,7 +22,7 @@ async def init_pool() -> asyncpg.Pool:
     global _pool
 
     # Supabase's transaction pooler (port 6543) runs pgbouncer, which does not
-    # support prepared statements — asyncpg uses them by default, so we disable
+    # support prepared statements, asyncpg uses them by default, so we disable
     # its statement cache. This is a no-op against a direct connection too.
     _pool = await asyncpg.create_pool(
         dsn=DATABASE_URL,

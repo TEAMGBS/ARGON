@@ -1,4 +1,4 @@
-"""/clan info — clan overview."""
+"""/clan info, clan overview."""
 
 import discord
 

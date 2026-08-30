@@ -1,4 +1,4 @@
-"""/reminders remove — delete a reminder by its list number."""
+"""/reminders remove, delete a reminder by its list number."""
 
 import discord
 

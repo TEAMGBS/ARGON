@@ -2,8 +2,8 @@
 
 coc.py computes unit stats from bundled game-data tables and does
 `self._static_data["levels"][level - start]`. When a unit's level exceeds those
-tables — which happens after a game update adds levels the pinned coc.py doesn't
-know yet — that raises `IndexError`. The client is created with
+tables, which happens after a game update adds levels the pinned coc.py doesn't
+know yet, that raises `IndexError`. The client is created with
 `raw_attribute=True`, so every player keeps its raw API dict, which already has
 `name`, `level`, `maxLevel`, `village` (and `superTroopIsActive`) for each unit.
 Reading from there avoids coc.py's game-data indexing entirely and stays correct

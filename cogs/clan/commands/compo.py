@@ -1,4 +1,4 @@
-"""/clan compo — Town Hall composition."""
+"""/clan compo, Town Hall composition."""
 
 import collections
 
@@ -20,9 +20,9 @@ async def compo(interaction: discord.Interaction, tag: str = None):
 
     # ClanMember carries the town hall level, so no extra per-player lookups needed.
     counts = collections.Counter(m.town_hall for m in clan.members)
-    rows = [f"{E_TOWNHALL} `TH{pad_start(th, 2)}` — **{n}**" for th, n in sorted(counts.items(), reverse=True)]
+    rows = [f"{E_TOWNHALL} `TH{pad_start(th, 2)}`, **{n}**" for th, n in sorted(counts.items(), reverse=True)]
 
-    embed = await base_embed(interaction, title=f"{clan.name} ({clan.tag}) — Composition")
+    embed = await base_embed(interaction, title=f"{clan.name} ({clan.tag}), Composition")
     embed.description = "\n".join(rows) or "_No data._"
     embed.set_footer(text=f"{clan.member_count} members")
     await interaction.followup.send(embed=embed)

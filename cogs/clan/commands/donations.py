@@ -1,4 +1,4 @@
-"""/clan donations — current-season donation leaderboard."""
+"""/clan donations, current-season donation leaderboard."""
 
 import discord
 
@@ -25,7 +25,7 @@ async def donations(interaction: discord.Interaction, tag: str = None):
         total_rec += m.received
         lines.append(f"`{pad_start(i, 2)} {pad(m.name, 15)} {pad_start(m.donations, 5)} {pad_start(m.received, 5)}`")
 
-    embed = await base_embed(interaction, title=f"{clan.name} ({clan.tag}) — Donations")
+    embed = await base_embed(interaction, title=f"{clan.name} ({clan.tag}), Donations")
     embed.description = "\n".join(lines)[:4000]
     embed.set_footer(text=f"{E_DONATE} {total_don}  •  {E_RECEIVE} {total_rec}")
     await interaction.followup.send(embed=embed)

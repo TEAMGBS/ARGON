@@ -2,7 +2,7 @@
 
 These are plain unicode placeholders so the bot works out of the box. To get the
 polished ClashPerk look, upload custom emojis to a server the bot is in and swap
-the values below for their ``<:name:id>`` strings (same interface — the cogs call
+the values below for their ``<:name:id>`` strings (same interface, the cogs call
 ``get_th_emoji`` etc., so only this file changes).
 """
 

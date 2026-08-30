@@ -94,7 +94,7 @@ class Scheduler(commands.Cog):
             return
         lines = [f"{E_UP} **{curr[t]['name']}** `{t}` joined" for t in joined]
         lines += [f"{E_DOWN} **{prev[t]['name']}** `{t}` left" for t in left]
-        await self._send(guild_id, channel_id, f"{E_CLAN} {clan_name} — Member Log", "\n".join(lines))
+        await self._send(guild_id, channel_id, f"{E_CLAN} {clan_name}, Member Log", "\n".join(lines))
 
     async def _post_donation_changes(self, guild_id, channel_id, clan_name, prev, curr):
         lines = []
@@ -109,7 +109,7 @@ class Scheduler(commands.Cog):
             if received > 0:
                 lines.append(f"{E_RECEIVE} **{data['name']}** received `{received}`")
         if lines:
-            await self._send(guild_id, channel_id, f"{E_CLAN} {clan_name} — Donation Log", "\n".join(lines))
+            await self._send(guild_id, channel_id, f"{E_CLAN} {clan_name}, Donation Log", "\n".join(lines))
 
     # ── War reminders ─────────────────────────────────────────────────────────
     async def _run_reminders(self, pool):
@@ -144,7 +144,7 @@ class Scheduler(commands.Cog):
 
         per_member = war.attacks_per_member or 2
         laggards = [
-            f"• **{m.name}** — {per_member - len(m.attacks)} left"
+            f"• **{m.name}**, {per_member - len(m.attacks)} left"
             for m in war.clan.members
             if per_member - len(m.attacks) >= r["min_remaining"]
         ]
@@ -155,7 +155,7 @@ class Scheduler(commands.Cog):
             [r["message"], "", f"War ends {discord_relative(war.end_time.time)}.", "", *laggards[:40]]
         )
         content = f"<@&{r['role_id']}>" if r["role_id"] else None
-        await self._send(r["guild_id"], r["channel_id"], f"{E_SWORD} War Reminder — {war.clan.name}", body, content)
+        await self._send(r["guild_id"], r["channel_id"], f"{E_SWORD} War Reminder, {war.clan.name}", body, content)
         await pool.execute(
             "INSERT INTO reminder_logs (reminder_id, fire_key) VALUES ($1, $2) ON CONFLICT DO NOTHING",
             r["id"],

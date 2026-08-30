@@ -1,4 +1,4 @@
-"""/flag add — flag a player for monitoring."""
+"""/flag add, flag a player for monitoring."""
 
 import discord
 

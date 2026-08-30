@@ -1,6 +1,6 @@
 # ARGON
 
-A feature-rich **Clash of Clans Discord bot** — a ClashPerk-style bot written in **Python**
+A feature-rich **Clash of Clans Discord bot**, a ClashPerk-style bot written in **Python**
 (discord.py + coc.py) with a **Supabase / Postgres** database.
 
 > An original reimplementation of ClashPerk's core feature set. Structured like the omega bot:
@@ -15,7 +15,7 @@ A feature-rich **Clash of Clans Discord bot** — a ClashPerk-style bot written 
 | `/clan` | `info` `compo` `donations` `boosts` `search` |
 | `/war` | `info` `log` `remaining` `lineup` |
 | `/cwl` | `roster` `round` |
-| `/legend` | — |
+| `/legend` | _(single command)_ |
 | `/link` | `add` `list` `remove` `verify` |
 | `/setup` | `clan` `remove` `list` `log` |
 | `/alias` | `add` `remove` `list` |
@@ -48,14 +48,14 @@ Adding a command = add a file under a cog's `commands/` and wire one line in tha
 ## Prerequisites
 
 - **Python 3.11+**
-- A **Discord bot token** + application — https://discord.com/developers/applications
-- A **Clash of Clans developer account** — https://developer.clashofclans.com
-- A **Supabase** project (free tier is fine) — https://supabase.com
+- A **Discord bot token** + application, https://discord.com/developers/applications
+- A **Clash of Clans developer account**, https://developer.clashofclans.com
+- A **Supabase** project (free tier is fine), https://supabase.com
 
 ### Clash of Clans API: just your email + password
 
 Set `COC_EMAIL` and `COC_PASSWORD` (your developer-site login). On startup coc.py logs in, detects
-this host's outbound IP, and **creates/rotates an IP-locked API key automatically** — so hosting on
+this host's outbound IP, and **creates/rotates an IP-locked API key automatically**, so hosting on
 Railway (where the IP can change on redeploy) just works, with no manual key creation.
 
 ## Setup (local)
@@ -89,7 +89,7 @@ The tables are created automatically from `database/schema.sql` the first time t
    Paste that as `DATABASE_URL`. (The bot disables asyncpg's prepared-statement cache so the
    Supabase pooler works out of the box.)
 
-That's it — no manual API-key creation, and redeploys that change Railway's IP are handled for you.
+That's it, no manual API-key creation, and redeploys that change Railway's IP are handled for you.
 
 ## Roadmap
 

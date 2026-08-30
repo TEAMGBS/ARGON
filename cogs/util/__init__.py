@@ -41,7 +41,7 @@ class util(ext_commands.Cog):
         days, rem = divmod(up, 86400)
         hours, rem = divmod(rem, 3600)
         minutes = rem // 60
-        embed = await base_embed(interaction, title="ARGON — Status")
+        embed = await base_embed(interaction, title="ARGON, Status")
         embed.add_field(name="Uptime", value=f"{days}d {hours}h {minutes}m", inline=True)
         embed.add_field(name="Guilds", value=str(len(self.bot.guilds)), inline=True)
         embed.add_field(name="Gateway", value=f"{round(self.bot.latency * 1000)}ms", inline=True)
@@ -50,14 +50,14 @@ class util(ext_commands.Cog):
 
     @app_commands.command(name="help", description="List available commands")
     async def help(self, interaction: discord.Interaction):
-        embed = await base_embed(interaction, title="ARGON — Commands")
+        embed = await base_embed(interaction, title="ARGON, Commands")
         embed.description = "A ClashPerk-style Clash of Clans bot. Type `/` and pick a command group."
         for cmd in sorted(self.bot.tree.get_commands(), key=lambda c: c.name):
             if isinstance(cmd, app_commands.Group):
                 subs = " ".join(f"`{s.name}`" for s in cmd.commands)
-                embed.add_field(name=f"/{cmd.name}", value=subs or "—", inline=False)
+                embed.add_field(name=f"/{cmd.name}", value=subs or "-", inline=False)
             else:
-                embed.add_field(name=f"/{cmd.name}", value=cmd.description or "—", inline=True)
+                embed.add_field(name=f"/{cmd.name}", value=cmd.description or "-", inline=True)
         await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name="profile", description="Show a member's linked accounts profile")
@@ -79,9 +79,9 @@ class util(ext_commands.Cog):
                 continue
             mark = E_CORRECT if row["verified"] else ""
             clan = f" • {p.clan.name}" if p.clan else ""
-            lines.append(f"{mark} {E_TOWNHALL}TH{p.town_hall} **{p.name}** ({p.tag}) — {E_TROPHY} {p.trophies}{clan}")
+            lines.append(f"{mark} {E_TOWNHALL}TH{p.town_hall} **{p.name}** ({p.tag}), {E_TROPHY} {p.trophies}{clan}")
 
-        embed = await base_embed(interaction, title=f"{target.display_name} — Profile")
+        embed = await base_embed(interaction, title=f"{target.display_name}, Profile")
         embed.description = "\n".join(lines)[:4000] or "_Could not load any accounts._"
         embed.set_thumbnail(url=target.display_avatar.url)
         await interaction.followup.send(embed=embed)
