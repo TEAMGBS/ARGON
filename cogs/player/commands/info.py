@@ -14,6 +14,7 @@ from utils.emojis import (
     E_TROPHY,
     E_XP,
     get_th_emoji,
+    get_unit_emoji,
 )
 from utils.resolver import resolve_player
 from utils.units import home_units
@@ -45,7 +46,9 @@ async def info(interaction: discord.Interaction, tag: str = None, user: discord.
     if heroes:
         embed.add_field(
             name="Heroes",
-            value="\n".join(f"{E_HERO} {h['name']}: **{h['level']}**/{h['maxLevel']}" for h in heroes),
+            value="\n".join(
+                f"{get_unit_emoji(h['name']) or E_HERO} {h['name']}: **{h['level']}**/{h['maxLevel']}" for h in heroes
+            ),
             inline=False,
         )
 

@@ -5,8 +5,7 @@ import collections
 import discord
 
 from utils.embeds import base_embed, error_embed
-from utils.emojis import E_TOWNHALL
-from utils.helpers import pad_start
+from utils.emojis import get_th_emoji
 from utils.resolver import resolve_clan
 
 
@@ -20,7 +19,7 @@ async def compo(interaction: discord.Interaction, tag: str = None):
 
     # ClanMember carries the town hall level, so no extra per-player lookups needed.
     counts = collections.Counter(m.town_hall for m in clan.members)
-    rows = [f"{E_TOWNHALL} `TH{pad_start(th, 2)}`, **{n}**" for th, n in sorted(counts.items(), reverse=True)]
+    rows = [f"{get_th_emoji(th)} TH{th}, **{n}**" for th, n in sorted(counts.items(), reverse=True)]
 
     embed = await base_embed(interaction, title=f"{clan.name} ({clan.tag}), Composition")
     embed.description = "\n".join(rows) or "_No data._"

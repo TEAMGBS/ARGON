@@ -3,7 +3,7 @@
 import discord
 
 from utils.embeds import base_embed, error_embed
-from utils.emojis import E_HERO, E_SPELL, E_TROOP
+from utils.emojis import E_HERO, E_SPELL, E_TROOP, get_unit_emoji
 from utils.helpers import pad, pad_start
 from utils.resolver import resolve_player
 from utils.units import home_units
@@ -12,7 +12,11 @@ from utils.units import home_units
 def _table(items) -> str:
     if not items:
         return "_none_"
-    lines = [f"`{pad(u['name'], 18)} {pad_start(u['level'], 2)}/{pad_start(u['maxLevel'], 2)}`" for u in items]
+    lines = []
+    for u in items:
+        e = get_unit_emoji(u["name"])
+        prefix = f"{e} " if e else ""
+        lines.append(f"{prefix}`{pad(u['name'], 16)} {pad_start(u['level'], 2)}/{pad_start(u['maxLevel'], 2)}`")
     return "\n".join(lines)[:1024]
 
 
