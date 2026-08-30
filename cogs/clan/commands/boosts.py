@@ -7,6 +7,7 @@ import discord
 from utils.embeds import base_embed, error_embed
 from utils.emojis import E_TROOP
 from utils.resolver import resolve_clan
+from utils.units import active_super_troops
 
 
 async def boosts(interaction: discord.Interaction, tag: str = None):
@@ -31,9 +32,8 @@ async def boosts(interaction: discord.Interaction, tag: str = None):
     for p in players:
         if not p:
             continue
-        for troop in p.super_troops:
-            if getattr(troop, "is_active", False):
-                boost_map.setdefault(troop.name, []).append(p.name)
+        for troop in active_super_troops(p):
+            boost_map.setdefault(troop["name"], []).append(p.name)
 
     embed = await base_embed(interaction, title=f"{clan.name} ({clan.tag}) — Active Boosts")
     if not boost_map:

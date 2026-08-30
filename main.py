@@ -32,6 +32,7 @@ COGS = [
     "cogs.reminders",
     "cogs.flags",
     "cogs.export",
+    "cogs.emoji",
     "cogs.util",
 ]
 

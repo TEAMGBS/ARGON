@@ -6,12 +6,13 @@ from utils.embeds import base_embed, error_embed
 from utils.emojis import E_HERO, E_SPELL, E_TROOP
 from utils.helpers import pad, pad_start
 from utils.resolver import resolve_player
+from utils.units import home_units
 
 
 def _table(items) -> str:
     if not items:
         return "_none_"
-    lines = [f"`{pad(u.name, 18)} {pad_start(u.level, 2)}/{pad_start(u.max_level, 2)}`" for u in items]
+    lines = [f"`{pad(u['name'], 18)} {pad_start(u['level'], 2)}/{pad_start(u['maxLevel'], 2)}`" for u in items]
     return "\n".join(lines)[:1024]
 
 
@@ -24,10 +25,8 @@ async def units(interaction: discord.Interaction, tag: str = None, user: discord
         return
 
     embed = await base_embed(interaction, title=f"{player.name} ({player.tag}) — Units")
-    embed.add_field(name=f"{E_HERO} Heroes", value=_table([h for h in player.heroes if h.is_home_base]), inline=False)
-    if player.pets:
-        embed.add_field(name="🐾 Pets", value=_table(player.pets), inline=False)
-    embed.add_field(name=f"{E_TROOP} Troops", value=_table(player.home_troops), inline=False)
-    embed.add_field(name=f"{E_SPELL} Spells", value=_table(player.spells), inline=False)
+    embed.add_field(name=f"{E_HERO} Heroes", value=_table(home_units(player, "heroes")), inline=False)
+    embed.add_field(name=f"{E_TROOP} Troops", value=_table(home_units(player, "troops")), inline=False)
+    embed.add_field(name=f"{E_SPELL} Spells", value=_table(home_units(player, "spells")), inline=False)
 
     await interaction.followup.send(embed=embed)
