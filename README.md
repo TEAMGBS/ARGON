@@ -1,101 +1,61 @@
 # ARGON
 
-A feature-rich **Clash of Clans Discord bot**, a ClashPerk-style bot written in **Python**
-(discord.py + coc.py) with a **Supabase / Postgres** database.
+A simple **Clash of Clans Discord bot** written in **Python** (discord.py + coc.py) with a
+**Supabase / Postgres** database.
 
-> An original reimplementation of ClashPerk's core feature set. Structured like the omega bot:
-> `config.py`, a `database/` layer with a single idempotent `schema.sql`, and one cog package per
-> feature area.
+> Kept intentionally minimal for now: account linking, clan logs, and war reminders. More features
+> will be added back over time.
 
-## Commands (42)
+## Commands
 
-| Group | Commands |
-| --- | --- |
-| `/player` | `info` `units` `army` `rushed` `upgrades` |
-| `/clan` | `info` `compo` `donations` `boosts` `search` |
-| `/war` | `info` `log` `remaining` `lineup` |
-| `/cwl` | `roster` `round` |
-| `/legend` | _(single command)_ |
-| `/link` | `add` `list` `remove` `verify` |
-| `/setup` | `clan` `remove` `list` `log` |
-| `/alias` | `add` `remove` `list` |
-| `/reminders` | `add` `list` `remove` |
-| `/flag` | `add` `remove` `list` |
-| `/export` | `members` (CSV) |
-| top-level | `/config` `/profile` `/timezone` `/help` `/ping` `/invite` `/status` |
+| Group | Commands | What it does |
+| --- | --- | --- |
+| `/link` | `add` `list` `remove` `verify` | Link Clash of Clans accounts to a Discord user |
+| `/setup` | `clan` `remove` `list` `log` | Link clans to the server and set up their logs |
+| `/reminders` | `add` `list` `remove` | War reminders for members who still have attacks |
 
-Background services: a **war-reminder scheduler** and a **clan-feed poller** (member join/leave and
-donation logs) that diff live clan state against Postgres snapshots and post to configured channels.
+Background services (run automatically):
+
+- **Clan logs / feed** — member join/leave and donation logs, posted to the channels set with
+  `/setup log`.
+- **War reminders** — fired by the scheduler for members who have not used their attacks.
 
 ## Project layout
 
 ```
 config.py                 # env vars
-main.py                   # entry: connect DB, log into CoC, load cogs, start bot
-database/
-  db.py                   # asyncpg pool + applies schema.sql
-  schema.sql              # the whole data model (idempotent CREATE TABLE IF NOT EXISTS)
-utils/                    # tags, embeds, emojis, helpers, resolver (shared code)
-cogs/<feature>/
-  __init__.py             # the Cog: builds the app_commands group + setup()
-  commands/<name>.py      # one file per command
-  tasks.py                # (reminders) the background scheduler
+main.py                   # connect DB, log into CoC, load cogs, start bot
+database/db.py + schema.sql
+utils/                    # tags, embeds, emojis, helpers, resolver
+cogs/link/                # /link
+cogs/setup/               # /setup (clan linking + logs)
+cogs/reminders/           # /reminders + the background scheduler (tasks.py)
 ```
 
-Adding a command = add a file under a cog's `commands/` and wire one line in that cog's
-`__init__.py`.
+## Environment variables
 
-## Prerequisites
+| Variable | Value |
+| --- | --- |
+| `BOT_TOKEN` | Discord bot token |
+| `COC_EMAIL` / `COC_PASSWORD` | developer.clashofclans.com login (mints an IP-locked key automatically) |
+| `DATABASE_URL` | Supabase connection-pooling URI (port 6543) |
+| `TEST_GUILD_ID` | optional, for instant command sync while developing |
 
-- **Python 3.11+**
-- A **Discord bot token** + application, https://discord.com/developers/applications
-- A **Clash of Clans developer account**, https://developer.clashofclans.com
-- A **Supabase** project (free tier is fine), https://supabase.com
-
-### Clash of Clans API: just your email + password
-
-Set `COC_EMAIL` and `COC_PASSWORD` (your developer-site login). On startup coc.py logs in, detects
-this host's outbound IP, and **creates/rotates an IP-locked API key automatically**, so hosting on
-Railway (where the IP can change on redeploy) just works, with no manual key creation.
-
-## Setup (local)
+## Run
 
 ```bash
-git clone <this-repo> && cd argon
-cp .env.example .env         # then fill in the values
 pip install -r requirements.txt
-python main.py               # creates the tables on first run, then starts the bot
+cp .env.example .env      # then fill in the values
+python main.py            # creates the tables on first run, then starts the bot
 ```
 
-The tables are created automatically from `database/schema.sql` the first time the bot connects.
-
-## Deploying on Railway
-
-1. **New Project → Deploy from GitHub repo** and pick this repo. Railway reads `railway.json`
-   (start: `python main.py`) and installs `requirements.txt` automatically.
-2. On the **service → Variables**, add:
-
-   | Variable | Value |
-   | --- | --- |
-   | `BOT_TOKEN` | your Discord bot token |
-   | `COC_EMAIL` | your developer.clashofclans.com email |
-   | `COC_PASSWORD` | your developer.clashofclans.com password |
-   | `DATABASE_URL` | your Supabase connection string (see below) |
-   | `TEST_GUILD_ID` | *(optional)* a server id for instant command sync |
-
-3. **Supabase connection string**: Supabase dashboard → *Project Settings → Database →
-   Connection string → "Connection pooling"* (the URI on port **6543**). It looks like:
-   `postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:6543/postgres`
-   Paste that as `DATABASE_URL`. (The bot disables asyncpg's prepared-statement cache so the
-   Supabase pooler works out of the box.)
-
-That's it, no manual API-key creation, and redeploys that change Railway's IP are handled for you.
+Deploy on Railway by pointing it at this repo (it reads `railway.json`, start: `python main.py`) and
+setting the variables above.
 
 ## Roadmap
 
-The remaining ClashPerk commands (`summary-*`, `leaderboard-*`, `capital-*`, `clan-games`, full
-history/legend-day tracking, roster management, Google-Sheets exports) are intentionally left out of
-this MVP. The one-file-per-command layout above is the extension point for them.
+Player, clan, war, CWL, legend, flags, export and the emoji tools were part of an earlier build and
+will be reintroduced gradually. The one-cog-per-feature layout is the extension point for them.
 
 ## License
 

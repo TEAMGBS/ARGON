@@ -21,19 +21,12 @@ intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+# Kept intentionally minimal for now: account linking, clan logs, and war
+# reminders. More cogs will be added back as the bot grows.
 COGS = [
-    "cogs.player",
-    "cogs.clan",
-    "cogs.war",
-    "cogs.cwl",
-    "cogs.legend",
     "cogs.link",
     "cogs.setup",
     "cogs.reminders",
-    "cogs.flags",
-    "cogs.export",
-    "cogs.emoji",
-    "cogs.util",
 ]
 
 

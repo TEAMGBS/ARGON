@@ -24,16 +24,6 @@ CREATE INDEX IF NOT EXISTS idx_linked_accounts_discord_id ON linked_accounts(dis
 
 
 -- ---------------------------------------------------------------------------
--- Per-user preferences (timezone)
--- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS user_settings (
-    discord_id  BIGINT PRIMARY KEY,
-    timezone    TEXT,
-    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-
--- ---------------------------------------------------------------------------
 -- Per-guild settings (embed color, timezone)
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS guild_settings (
@@ -87,19 +77,6 @@ CREATE TABLE IF NOT EXISTS clan_snapshots (
 
 
 -- ---------------------------------------------------------------------------
--- Clan tag aliases (short names that stand in for a tag)
--- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS aliases (
-    id          SERIAL PRIMARY KEY,
-    guild_id    BIGINT NOT NULL,
-    name        TEXT NOT NULL,
-    tag         TEXT NOT NULL,
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (guild_id, name)
-);
-
-
--- ---------------------------------------------------------------------------
 -- War reminders (fired by the background scheduler)
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS reminders (
@@ -123,20 +100,3 @@ CREATE TABLE IF NOT EXISTS reminder_logs (
     fired_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     PRIMARY KEY (reminder_id, fire_key)
 );
-
-
--- ---------------------------------------------------------------------------
--- Flagged players (watchlist)
--- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS flags (
-    id          SERIAL PRIMARY KEY,
-    guild_id    BIGINT NOT NULL,
-    tag         TEXT NOT NULL,
-    name        TEXT,
-    reason      TEXT NOT NULL,
-    flagged_by  BIGINT NOT NULL,
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (guild_id, tag)
-);
-
-CREATE INDEX IF NOT EXISTS idx_flags_guild ON flags(guild_id);
