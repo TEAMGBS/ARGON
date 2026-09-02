@@ -54,13 +54,18 @@ async def on_ready():
     if not rotate_presence.is_running():
         rotate_presence.start()
     try:
+        # Sync commands globally only. Copying globals into the test guild as well
+        # makes every command show up twice there (once global, once guild-scoped),
+        # so instead we clear any guild-scoped commands the test guild still has.
+        # This is self-healing: leaving TEST_GUILD_ID set is harmless, and any
+        # existing duplicates clear on the next boot.
         synced = await bot.tree.sync()
         print(f"✅ Synced {len(synced)} global command(s).")
         if TEST_GUILD_ID:
             guild = discord.Object(id=TEST_GUILD_ID)
-            bot.tree.copy_global_to(guild=guild)
+            bot.tree.clear_commands(guild=guild)
             await bot.tree.sync(guild=guild)
-            print(f"✅ Copied commands to test guild {TEST_GUILD_ID} for instant updates.")
+            print(f"✅ Cleared guild-scoped commands in test guild {TEST_GUILD_ID}; using global only.")
     except Exception:
         print(f"❌ Failed to sync commands:\n{traceback.format_exc()}")
 
