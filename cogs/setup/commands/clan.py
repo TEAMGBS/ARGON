@@ -8,7 +8,7 @@ from utils.emojis import E_CLAN
 from utils.tags import is_valid_tag, normalize_tag
 
 
-async def clan_add(interaction: discord.Interaction, tag: str, alias: str = None):
+async def clan_add(interaction: discord.Interaction, tag: str):
     await interaction.response.defer()
     if not is_valid_tag(tag):
         await interaction.followup.send(embed=error_embed("Invalid clan tag."))
@@ -29,14 +29,6 @@ async def clan_add(interaction: discord.Interaction, tag: str, alias: str = None
         tag,
         clan.name,
     )
-    if alias:
-        await pool.execute(
-            """INSERT INTO aliases (guild_id, name, tag) VALUES ($1, $2, $3)
-               ON CONFLICT (guild_id, name) DO UPDATE SET tag = EXCLUDED.tag""",
-            interaction.guild_id,
-            alias.lower(),
-            tag,
-        )
     await interaction.followup.send(embed=success_embed(f"Linked **{clan.name}** (`{tag}`) to this server."))
 
 
