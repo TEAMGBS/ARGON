@@ -2,10 +2,10 @@ import discord
 from discord import app_commands
 from discord.ext import commands as ext_commands
 
+from .commands.add_clan import category_autocomplete
 from .commands.add_clan import handle as add_clan
 from .commands.info_clans import handle as info_clans
 from .commands.remove_clan import handle as remove_clan
-from .commands.show_clans import handle as show_clans
 
 _MANAGE = discord.Permissions(manage_guild=True)
 
@@ -20,13 +20,17 @@ class alliance(ext_commands.Cog):
         )
 
         self.group.command(name="add-clan", description="Add a clan to this server")(
-            app_commands.describe(tag="Clan tag, e.g. #2PP0")(add_clan)
+            app_commands.describe(
+                tag="Clan tag, e.g. #2PP0",
+                category="Which category the clan belongs to (e.g. competitive, casual, fwa)",
+            )(app_commands.autocomplete(category=category_autocomplete)(add_clan))
         )
         self.group.command(name="remove-clan", description="Remove a clan and its logs and reminders")(
             app_commands.describe(tag="Clan tag")(remove_clan)
         )
-        self.group.command(name="show-clans", description="List the clans added to this server")(show_clans)
-        self.group.command(name="info-clans", description="Show live details for each added clan")(info_clans)
+        self.group.command(name="info-clans", description="Show a live overview board of the server's clans")(
+            info_clans
+        )
 
         bot.tree.add_command(self.group)
 

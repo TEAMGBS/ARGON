@@ -228,6 +228,48 @@ def get_th_emoji(level) -> str:
     return CUSTOM.get(f"TH{level}", f"TH{level}")
 
 
+# Clash of Clans war-league tiers (in-game name -> the family used in our emoji
+# registry). CWL war leagues are named like "Champion League I", "Crystal League
+# III", etc. We map the tier word to an emoji family and the trailing roman
+# numeral to 1/2/3. Bronze/Silver/Gold have no dedicated icon yet, so they fall
+# back to the lowest available tier; update these once the emojis are uploaded.
+_CWL_TIER_FAMILY = {
+    "champion": "cwlchamp",
+    "titan": "cwltitan",
+    "master": "cwlmaster",
+    "crystal": "cwlcrystal",
+    # No dedicated emojis for these yet - fall back to crystal so the row still
+    # shows an icon. Swap for real families when they are added.
+    "gold": "cwlcrystal",
+    "silver": "cwlcrystal",
+    "bronze": "cwlcrystal",
+}
+
+_ROMAN = {"i": 1, "ii": 2, "iii": 3}
+
+
+def cwl_league_emoji(name: str, default: str = "") -> str:
+    """Emoji for a clan's CWL war league by its in-game name, e.g.
+    "Champion League I" -> <:cwlchamp1:...>. Returns ``default`` (or the legend
+    emoji for "Legend League") when there is no match."""
+    if not name:
+        return default
+    lowered = name.lower()
+    if "legend" in lowered:
+        return CUSTOM.get("cwllegend", default)
+    if "unranked" in lowered:
+        return default
+
+    family = next((fam for word, fam in _CWL_TIER_FAMILY.items() if word in lowered), None)
+    if not family:
+        return default
+
+    # Trailing roman numeral -> tier number (defaults to 1 when absent).
+    token = lowered.replace("league", "").strip().split()
+    tier = _ROMAN.get(token[-1], 1) if token else 1
+    return CUSTOM.get(f"{family}{tier}", default)
+
+
 # ── Semantic constants used across cogs ───────────────────────────────────────
 # Real custom emojis where one exists, unicode fallbacks otherwise.
 E_PEOPLE = CUSTOM["people"]
