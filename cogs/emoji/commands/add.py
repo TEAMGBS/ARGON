@@ -94,14 +94,14 @@ async def handle(interaction: discord.Interaction, emojis: str) -> None:
                 continue
             data = await _download(session, eid, animated)
             if data is None:
-                failed.append(f"{name} (`{eid}`) — image not found")
+                failed.append(f"{name} (`{eid}`) · image not found")
                 continue
             try:
                 created = await interaction.client.create_application_emoji(name=name, image=data)
                 existing.add(created.name.lower())
                 added.append(f"{created} {created.name}")
             except discord.HTTPException as exc:
-                failed.append(f"{name} (`{eid}`) — {exc.text or exc}")
+                failed.append(f"{name} (`{eid}`) · {exc.text or exc}")
 
     lines = [f"**Added {len(added)}** · **Skipped {len(skipped)}** · **Failed {len(failed)}**"]
     if added:

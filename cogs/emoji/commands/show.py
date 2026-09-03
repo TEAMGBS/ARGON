@@ -48,11 +48,11 @@ async def handle(interaction: discord.Interaction, raw: bool = False) -> None:
         body = "\n".join(f'    "{e.name}": "<{"a" if e.animated else ""}:{e.name}:{e.id}>",' for e in emojis)
         pages = _chunk_messages(body.split("\n"), limit=1850)
         for i, page in enumerate(pages):
-            header = f"**{len(emojis)} application emoji(s)** — raw ({i + 1}/{len(pages)})\n" if i == 0 else ""
+            header = f"**{len(emojis)} application emoji(s)** · raw ({i + 1}/{len(pages)})\n" if i == 0 else ""
             await interaction.followup.send(f"{header}```py\n{page}\n```", ephemeral=True)
         return
 
-    lines = [f"{e} `{e.name}` — `{e.id}`" for e in emojis]
+    lines = [f"{e} `{e.name}` · `{e.id}`" for e in emojis]
     pages = _chunk_messages(lines)
     for i, page in enumerate(pages):
         header = f"**{len(emojis)} application emoji(s)** ({i + 1}/{len(pages)})\n" if i == 0 else ""

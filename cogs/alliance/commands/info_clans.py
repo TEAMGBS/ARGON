@@ -42,9 +42,9 @@ def _now_stamp() -> str:
 
 
 def _fmt(value) -> str:
-    """Render a value for a card row, using an em dash when it is missing."""
+    """Render a value for a card row, using 'N/A' when it is missing."""
     if value is None or value == "":
-        return "—"
+        return "N/A"
     return str(value)
 
 
@@ -52,7 +52,7 @@ def _leader_name(clan: coc.Clan) -> str:
     for member in getattr(clan, "members", []) or []:
         if getattr(member, "role", None) == coc.Role.leader:
             return member.name
-    return "—"
+    return "N/A"
 
 
 def _capital_stats(clan: coc.Clan):
@@ -76,7 +76,7 @@ def build_clan_card(clan: coc.Clan, color: discord.Color) -> discord.ui.LayoutVi
     league_icon = cwl_league_emoji(league_name)
     th_level = getattr(clan, "required_townhall_level", None)
     th = f"{get_th_emoji(th_level)} TH{th_level}" if th_level else "Any"
-    location = clan.location.name if getattr(clan, "location", None) else "—"
+    location = clan.location.name if getattr(clan, "location", None) else "N/A"
 
     # War/tie totals are only exposed when a clan's war log is public.
     if getattr(clan, "public_war_log", False):
@@ -85,7 +85,7 @@ def build_clan_card(clan: coc.Clan, color: discord.Color) -> discord.ui.LayoutVi
         wins, losses, ties = getattr(clan, "war_wins", None), "🔒 Private", "🔒 Private"
 
     capital_league = getattr(clan, "capital_league", None)
-    capital_league_name = capital_league.name if capital_league else "—"
+    capital_league_name = capital_league.name if capital_league else "N/A"
     capital_hall, capital_total = _capital_stats(clan)
 
     description = (clan.description or "No description set.").strip()
