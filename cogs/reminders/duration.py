@@ -12,12 +12,16 @@ import re
 
 from discord import app_commands
 
-_MAX_MINUTES = 2880  # 48h - the longest a war (prep + battle day) can run.
+_MAX_MINUTES = 2880  # 48h - the hard cap; nothing longer is accepted.
 
 # Common presets offered by the autocomplete (minutes).
-_PRESETS = [15, 30, 45, 60, 90, 120, 180, 240, 360, 480, 600, 720, 1440]
+_PRESETS = [15, 30, 45, 60, 90, 120, 180, 240, 360, 480, 600, 720, 1440, 2880]
 
 _HM_RE = re.compile(r"^(?:(\d+)h)?(?:(\d+)m)?$")
+
+
+class DurationError(ValueError):
+    """Raised with a user-facing message when a time can't be parsed."""
 
 
 def format_minutes(total: int) -> str:
@@ -31,7 +35,7 @@ def format_minutes(total: int) -> str:
 
 
 def _parse_one(part: str) -> int | None:
-    """One duration token to minutes. Raises ValueError(token) if invalid."""
+    """One duration token to minutes. Raises DurationError with a clear message."""
     token = part.strip()
     if not token:
         return None
@@ -41,10 +45,12 @@ def _parse_one(part: str) -> int | None:
     else:
         match = _HM_RE.fullmatch(compact)
         if not match or (match.group(1) is None and match.group(2) is None):
-            raise ValueError(token)
+            raise DurationError(f"`{token}` is not a valid time. Try `1h`, `30m`, or `2h30m`.")
         minutes = int(match.group(1) or 0) * 60 + int(match.group(2) or 0)
-    if minutes < 1 or minutes > _MAX_MINUTES:
-        raise ValueError(token)
+    if minutes < 1:
+        raise DurationError(f"`{token}` must be at least 1 minute.")
+    if minutes > _MAX_MINUTES:
+        raise DurationError("The longest reminder time is 48h; you can't set more than that.")
     return minutes
 
 
@@ -64,7 +70,7 @@ def parse_durations(text: str) -> list[int]:
 
 
 async def time_autocomplete(interaction, current: str) -> list[app_commands.Choice]:
-    """Suggest preset times while still accepting free-form input like '2h2m'."""
+    """Suggest preset times while still accepting free-form input like '2h30m'."""
     current = (current or "").strip()
     choices: list[app_commands.Choice] = []
     seen: set[str] = set()
@@ -77,15 +83,15 @@ async def time_autocomplete(interaction, current: str) -> list[app_commands.Choi
             parsed = []
         if parsed:
             label = ", ".join(format_minutes(m) for m in parsed)
-            choices.append(app_commands.Choice(name=f"⏰ {label}", value=current[:100]))
-            seen.add(current.lower())
+            choices.append(app_commands.Choice(name=label[:100], value=current[:100]))
+            seen.add(label)
 
     for minutes in _PRESETS:
         token = format_minutes(minutes)
         if token in seen:
             continue
         if not current or current.lower() in token:
-            choices.append(app_commands.Choice(name=f"{token} before war ends", value=token))
+            choices.append(app_commands.Choice(name=token, value=token))
             seen.add(token)
 
     return choices[:25]
