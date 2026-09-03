@@ -61,6 +61,7 @@ async def update_reminder(
     member_scope: str,
     townhalls: list[int],
     roles: list[str],
+    war_types: list[str],
 ) -> None:
     pool = await get_pool()
     await pool.execute(
@@ -72,7 +73,8 @@ async def update_reminder(
                remaining_filter = $6,
                member_scope = $7,
                townhalls = $8,
-               roles = $9
+               roles = $9,
+               war_types = $10
            WHERE id = $1""",
         reminder_id,
         message,
@@ -83,6 +85,7 @@ async def update_reminder(
         member_scope,
         townhalls,
         roles,
+        war_types,
     )
 
 

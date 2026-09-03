@@ -4,7 +4,15 @@ import discord
 
 from database import reminders as reminders_db
 
-from .constants import CLAN_ROLES, ROLE_LABELS, TIMING_CHOICES, TOWNHALL_LEVELS, TYPE_LABELS
+from .constants import (
+    CLAN_ROLES,
+    ROLE_LABELS,
+    TIMING_CHOICES,
+    TOWNHALL_LEVELS,
+    TYPE_LABELS,
+    WAR_TYPE_LABELS,
+    WAR_TYPES,
+)
 from .state import ReminderState
 
 
@@ -51,12 +59,30 @@ class ReminderConfigView(discord.ui.LayoutView):
 
         header = TYPE_LABELS[self.state.type]
         summary_lines = [f"**{header}**", f"Clan: {self.state.clan_name} ({self.state.clan_tag})"]
+        if self.state.type == "war":
+            chosen = [WAR_TYPE_LABELS[v] for v in self.state.war_types if v in WAR_TYPE_LABELS]
+            summary_lines.append(f"War types: {', '.join(chosen) if chosen else 'All'}")
         if self.state.message:
             summary_lines.append(self.state.message)
         if self.state.reminder_id:
             summary_lines.append(f"ID: `{self.state.reminder_id}`")
         container.add_item(discord.ui.TextDisplay("\n".join(summary_lines)))
         container.add_item(discord.ui.Separator())
+
+        if self.state.type == "war":
+            war_type_row = discord.ui.ActionRow()
+            war_type_select = discord.ui.Select(
+                placeholder="War types (leave empty for all)",
+                min_values=0,
+                max_values=len(WAR_TYPES),
+                options=[
+                    discord.SelectOption(label=label, value=value, default=value in self.state.war_types)
+                    for value, label in WAR_TYPES
+                ],
+            )
+            war_type_select.callback = self.on_war_type_select
+            war_type_row.add_item(war_type_select)
+            container.add_item(war_type_row)
 
         timing_row = discord.ui.ActionRow()
         timing_select = discord.ui.Select(
@@ -144,6 +170,12 @@ class ReminderConfigView(discord.ui.LayoutView):
         self.render()
         await interaction.response.edit_message(view=self)
 
+    async def on_war_type_select(self, interaction: discord.Interaction) -> None:
+        valid = {value for value, _ in WAR_TYPES}
+        self.state.war_types = [v for v in interaction.data.get("values", []) if v in valid]
+        self.render()
+        await interaction.response.edit_message(view=self)
+
     def make_remaining_callback(self, value: int):
         async def callback(interaction: discord.Interaction) -> None:
             if value in self.state.remaining_filter:
@@ -215,6 +247,7 @@ class ReminderConfigView(discord.ui.LayoutView):
                 member_scope=self.state.member_scope,
                 townhalls=self.state.townhalls,
                 roles=self.state.roles,
+                war_types=self.state.war_types,
             )
         except Exception as e:
             await interaction.followup.send(f"Failed to save reminder: {e}", ephemeral=True)
