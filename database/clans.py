@@ -9,14 +9,16 @@ from __future__ import annotations
 from database.db import get_pool
 
 
-async def add_clan(guild_id: int, tag: str, name: str) -> None:
+async def add_clan(guild_id: int, tag: str, name: str, category: str = "casual") -> None:
     pool = await get_pool()
     await pool.execute(
-        """INSERT INTO clan_stores (guild_id, tag, name) VALUES ($1, $2, $3)
-           ON CONFLICT (guild_id, tag) DO UPDATE SET name = EXCLUDED.name""",
+        """INSERT INTO clan_stores (guild_id, tag, name, category) VALUES ($1, $2, $3, $4)
+           ON CONFLICT (guild_id, tag)
+           DO UPDATE SET name = EXCLUDED.name, category = EXCLUDED.category""",
         guild_id,
         tag,
         name,
+        category,
     )
 
 
@@ -38,3 +40,14 @@ async def get_clan(guild_id: int, tag: str):
 async def get_clans_for_guild(guild_id: int):
     pool = await get_pool()
     return await pool.fetch("SELECT * FROM clan_stores WHERE guild_id = $1 ORDER BY created_at", guild_id)
+
+
+async def get_categories_for_guild(guild_id: int) -> list[str]:
+    """Distinct clan categories already used in this guild, ordered by first use."""
+    pool = await get_pool()
+    rows = await pool.fetch(
+        "SELECT category, MIN(created_at) AS first_seen FROM clan_stores "
+        "WHERE guild_id = $1 GROUP BY category ORDER BY first_seen",
+        guild_id,
+    )
+    return [row["category"] for row in rows if row["category"]]

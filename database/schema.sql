@@ -42,9 +42,13 @@ CREATE TABLE IF NOT EXISTS clan_stores (
     guild_id    BIGINT NOT NULL,
     tag         TEXT NOT NULL,
     name        TEXT NOT NULL,
+    category    TEXT NOT NULL DEFAULT 'casual',
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (guild_id, tag)
 );
+
+-- Added after the initial release; safe to re-run on an existing database.
+ALTER TABLE clan_stores ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT 'casual';
 
 CREATE INDEX IF NOT EXISTS idx_clan_stores_guild ON clan_stores(guild_id);
 

@@ -28,6 +28,7 @@ COGS = [
     "cogs.alliance",
     "cogs.setup",
     "cogs.reminders",
+    "cogs.emoji",
 ]
 
 
