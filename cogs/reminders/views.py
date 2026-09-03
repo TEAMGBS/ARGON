@@ -7,12 +7,12 @@ from database import reminders as reminders_db
 from .constants import (
     CLAN_ROLES,
     ROLE_LABELS,
-    TIMING_CHOICES,
     TOWNHALL_LEVELS,
     TYPE_LABELS,
     WAR_TYPE_LABELS,
     WAR_TYPES,
 )
+from .duration import format_minutes
 from .state import ReminderState
 
 
@@ -59,6 +59,8 @@ class ReminderConfigView(discord.ui.LayoutView):
 
         header = TYPE_LABELS[self.state.type]
         summary_lines = [f"**{header}**", f"Clan: {self.state.clan_name} ({self.state.clan_tag})"]
+        if self.state.timing_minutes:
+            summary_lines.append(f"Reminds at: {', '.join(format_minutes(m) for m in self.state.timing_minutes)} before it ends")
         if self.state.type == "war":
             chosen = [WAR_TYPE_LABELS[v] for v in self.state.war_types if v in WAR_TYPE_LABELS]
             summary_lines.append(f"War types: {', '.join(chosen) if chosen else 'All'}")
@@ -83,20 +85,6 @@ class ReminderConfigView(discord.ui.LayoutView):
             war_type_select.callback = self.on_war_type_select
             war_type_row.add_item(war_type_select)
             container.add_item(war_type_row)
-
-        timing_row = discord.ui.ActionRow()
-        timing_select = discord.ui.Select(
-            placeholder="Select reminder timing",
-            min_values=1,
-            max_values=len(TIMING_CHOICES),
-            options=[
-                discord.SelectOption(label=label, value=str(minutes), default=minutes in self.state.timing_minutes)
-                for minutes, label in TIMING_CHOICES
-            ],
-        )
-        timing_select.callback = self.on_timing_select
-        timing_row.add_item(timing_select)
-        container.add_item(timing_row)
 
         if self.state.type == "war":
             remaining_row = discord.ui.ActionRow()
@@ -163,12 +151,6 @@ class ReminderConfigView(discord.ui.LayoutView):
         container.add_item(action_row)
 
         self.add_item(container)
-
-    async def on_timing_select(self, interaction: discord.Interaction) -> None:
-        values = interaction.data.get("values", [])
-        self.state.timing_minutes = sorted(int(v) for v in values)
-        self.render()
-        await interaction.response.edit_message(view=self)
 
     async def on_war_type_select(self, interaction: discord.Interaction) -> None:
         valid = {value for value, _ in WAR_TYPES}

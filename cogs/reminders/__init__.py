@@ -7,6 +7,7 @@ from utils.resolver import clan_autocomplete
 from .commands.create import handle as create_reminder
 from .commands.delete import handle as delete_reminder
 from .commands.list import handle as list_reminders
+from .duration import time_autocomplete
 
 _MANAGE = discord.Permissions(manage_guild=True)
 
@@ -21,11 +22,12 @@ async def _create_command(
     interaction: discord.Interaction,
     type: str,
     clan_tag: str,
+    time: str,
     message: str | None = None,
     channel: discord.TextChannel | None = None,
 ):
     # `type` is a str because the parameter is annotated str (discord.py passes the choice value).
-    await create_reminder(interaction, type, clan_tag, message, channel)
+    await create_reminder(interaction, type, clan_tag, time, message, channel)
 
 
 class reminders(ext_commands.Cog):
@@ -41,10 +43,11 @@ class reminders(ext_commands.Cog):
             app_commands.describe(
                 type="What the reminder is for",
                 clan_tag="A clan added to this server",
+                time="When to remind before it ends, e.g. 1h, 30m, 2h2m (comma-separate for several)",
                 message="Optional message to include",
                 channel="Channel to post in (defaults to here)",
             )(
-                app_commands.autocomplete(clan_tag=clan_autocomplete)(
+                app_commands.autocomplete(clan_tag=clan_autocomplete, time=time_autocomplete)(
                     app_commands.choices(type=_TYPE_CHOICES)(_create_command)
                 )
             )
