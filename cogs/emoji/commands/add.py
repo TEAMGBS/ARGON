@@ -66,21 +66,23 @@ async def _download(session: aiohttp.ClientSession, eid: int, animated: bool) ->
 
 
 async def handle(interaction: discord.Interaction, emojis: str) -> None:
+    # Acknowledge immediately - the owner check does an HTTP fetch and would
+    # otherwise blow the 3s response window (error 10062: Unknown interaction).
+    await interaction.response.defer(ephemeral=True, thinking=True)
+
     if not await interaction.client.is_owner(interaction.user):
-        await interaction.response.send_message(
+        await interaction.followup.send(
             embed=error_embed("Only the bot owner can manage application emojis."), ephemeral=True
         )
         return
 
     parsed = parse_emojis(emojis)
     if not parsed:
-        await interaction.response.send_message(
+        await interaction.followup.send(
             embed=error_embed("No emoji ids or mentions found. Paste `<:name:id>` mentions or `name id` pairs."),
             ephemeral=True,
         )
         return
-
-    await interaction.response.defer(ephemeral=True, thinking=True)
 
     existing = {e.name.lower() for e in await interaction.client.fetch_application_emojis()}
 
