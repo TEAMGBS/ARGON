@@ -31,11 +31,8 @@ async def handle(
 
     try:
         timings = parse_durations(time)
-    except ValueError as bad:
-        await interaction.response.send_message(
-            embed=error_embed(f"`{bad}` is not a valid time. Try `1h`, `30m`, `2h2m`, or `1h, 30m`."),
-            ephemeral=True,
-        )
+    except ValueError as err:
+        await interaction.response.send_message(embed=error_embed(str(err)), ephemeral=True)
         return
     if not timings:
         await interaction.response.send_message(

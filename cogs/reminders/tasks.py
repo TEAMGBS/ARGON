@@ -271,8 +271,12 @@ class Scheduler(commands.Cog):
 
         def line(m: dict, discord_id) -> str:
             th = get_th_emoji(m["th"])
-            who = f"<@{discord_id}> {m['name']}" if discord_id else m["name"]
-            return f"{th} {who} ({m['used']}/{m['total']})"
+            # Name + attack count go inside a code span; a leading backtick in a
+            # name would break it, so drop any backticks. The TH emoji and the
+            # ping stay outside (custom emoji and mentions don't work in code).
+            name = m["name"].replace("`", "")
+            code = f"`{name} ({m['used']}/{m['total']})`"
+            return f"{th} {code} <@{discord_id}>" if discord_id else f"{th} {code}"
 
         linked = [line(m, link_map[m["tag"]]) for m in laggards if m["tag"] in link_map]
         unlinked = [line(m, None) for m in laggards if m["tag"] not in link_map]
