@@ -14,7 +14,7 @@ from discord.ext import commands, tasks
 from config import POLL_INTERVAL_SECONDS
 from database.db import get_pool
 from utils.embeds import guild_color
-from utils.emojis import E_DONATE, E_RECEIVE, E_SWORD, E_UP, E_DOWN, E_CLAN
+from utils.emojis import E_DONATE, E_RECEIVE, E_UP, E_DOWN, E_CLAN, get_th_emoji
 from utils.helpers import discord_relative
 
 # Map the raw Clash of Clans API role value to the values stored by the reminder
@@ -165,14 +165,16 @@ class Scheduler(commands.Cog):
                 await self._mark_fired(pool, r["id"], fire_key)
                 continue
 
-            body = "\n".join(
-                [line for line in (r["message"],) if line]
-                + ["", f"War ends {discord_relative(war.end_time.time)}.", "", *laggards[:40]]
-            )
-            await self._send(r["guild_id"], r["channel_id"], f"{E_SWORD} War Reminder, {war.clan.name}", body)
+            content = await self._build_war_message(pool, r, war, laggards)
+            await self._send_text(r["guild_id"], r["channel_id"], content)
             await self._mark_fired(pool, r["id"], fire_key)
 
-    async def _war_laggards(self, r, war) -> list[str]:
+    async def _war_laggards(self, r, war) -> list[dict]:
+        """War members who still owe attacks, after the reminder's filters.
+
+        Each entry: {tag, name, th, used, total}. The caller turns these into
+        the message lines (with a Town Hall emoji and a ping for linked users).
+        """
         per_member = war.attacks_per_member or 2
         remaining_filter = set(r["remaining_filter"] or [])
         townhalls = set(r["townhalls"] or [])
@@ -188,9 +190,10 @@ class Scheduler(commands.Cog):
             except Exception:
                 role_by_tag = {}
 
-        lines = []
+        members = []
         for m in war.clan.members:
-            remaining = per_member - len(m.attacks)
+            used = len(m.attacks)
+            remaining = per_member - used
             if remaining <= 0:
                 continue
             if remaining_filter and remaining not in remaining_filter:
@@ -200,8 +203,37 @@ class Scheduler(commands.Cog):
                     continue
                 if roles and role_by_tag.get(m.tag) not in roles:
                     continue
-            lines.append(f"• **{m.name}**, {remaining} left")
-        return lines
+            members.append({"tag": m.tag, "name": m.name, "th": m.town_hall, "used": used, "total": per_member})
+        return members
+
+    async def _build_war_message(self, pool, r, war, laggards) -> str:
+        """ClashPerk-style war reminder: a bell header, the optional message, then
+        one line per member as `{TH emoji} {@mention or name} ({used}/{total})`.
+        Linked members are pinged and listed first, unlinked members follow."""
+        # Which of these players are linked to a Discord account (to @mention them).
+        tags = [m["tag"] for m in laggards]
+        link_rows = await pool.fetch("SELECT tag, discord_id FROM linked_accounts WHERE tag = ANY($1)", tags)
+        link_map = {row["tag"]: row["discord_id"] for row in link_rows}
+
+        def line(m: dict, discord_id) -> str:
+            th = get_th_emoji(m["th"])
+            who = f"<@{discord_id}> {m['name']}" if discord_id else m["name"]
+            return f"{th} {who} ({m['used']}/{m['total']})"
+
+        linked = [line(m, link_map[m["tag"]]) for m in laggards if m["tag"] in link_map]
+        unlinked = [line(m, None) for m in laggards if m["tag"] not in link_map]
+
+        parts = [f"🔔 **{war.clan.name} (War ends {discord_relative(war.end_time.time)})**"]
+        if r["message"]:
+            parts.append(f"✉️ {r['message']}")
+        parts.append("")
+
+        body = linked[:40]
+        if linked and unlinked:
+            body.append("")
+        body += unlinked[: max(0, 40 - len(linked))]
+
+        return "\n".join(parts + body)[:2000]
 
     async def _mark_fired(self, pool, reminder_id, fire_key):
         await pool.execute(
@@ -210,7 +242,26 @@ class Scheduler(commands.Cog):
             fire_key,
         )
 
-    # ── Helper ────────────────────────────────────────────────────────────────
+    # ── Helpers ───────────────────────────────────────────────────────────────
+    async def _send_text(self, guild_id, channel_id, content: str):
+        """Send a plain-content message. Mentions only notify from message content
+        (not from inside an embed), so war reminders use this to actually ping."""
+        channel = self.bot.get_channel(int(channel_id))
+        if channel is None:
+            try:
+                channel = await self.bot.fetch_channel(int(channel_id))
+            except Exception:
+                return
+        if not isinstance(channel, discord.abc.Messageable):
+            return
+        try:
+            await channel.send(
+                content=content[:2000],
+                allowed_mentions=discord.AllowedMentions(users=True, roles=False, everyone=False),
+            )
+        except Exception:
+            pass
+
     async def _send(self, guild_id, channel_id, title, description, content=None):
         channel = self.bot.get_channel(int(channel_id))
         if channel is None:
