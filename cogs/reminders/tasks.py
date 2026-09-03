@@ -170,9 +170,22 @@ class Scheduler(commands.Cog):
 
         minutes_left = war.end_time.seconds_until / 60
         timings = r["timing_minutes"] or []
-        for timing in timings:
-            # Fire once when we enter the [timing - poll, timing] window.
-            if not (timing - poll_minutes <= minutes_left <= timing):
+        if not timings:
+            print(f"[reminder {r['id']}] {tag}: inWar with {minutes_left:.0f}m left but no timings set; nothing to fire.")
+            return
+        # Only log while the war is within reach of a timing, so idle early-war
+        # polls stay quiet but the "not due yet" reason is visible near firing.
+        if minutes_left <= max(timings) + 5:
+            print(f"[reminder {r['id']}] {tag}: inWar, {minutes_left:.0f}m left, timings={timings}, war_type={self._war_type(war)}.")
+
+        # How late we're still willing to deliver a timing we missed (poll jitter,
+        # a slow API call, or a brief restart). Beyond this the timing is recorded
+        # as fired without sending, so a long outage doesn't spam stale reminders.
+        catchup = max(30.0, poll_minutes * 5)
+        for timing in (r["timing_minutes"] or []):
+            # Fire once the war has crossed below this timing threshold - not only
+            # inside a one-minute window, so a delayed poll never drops it.
+            if minutes_left > timing:
                 continue
 
             fire_key = f"{war.end_time.raw_time}:{timing}"
@@ -180,6 +193,12 @@ class Scheduler(commands.Cog):
                 "SELECT 1 FROM reminder_logs WHERE reminder_id = $1 AND fire_key = $2", r["id"], fire_key
             )
             if exists:
+                continue
+
+            # We're well past the intended time (e.g. the bot was down for a while):
+            # mark it handled but don't send a confusing late reminder.
+            if minutes_left < timing - catchup:
+                await self._mark_fired(pool, r["id"], fire_key)
                 continue
 
             laggards = await self._war_laggards(r, war)
