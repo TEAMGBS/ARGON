@@ -77,25 +77,46 @@ CREATE TABLE IF NOT EXISTS clan_snapshots (
 
 
 -- ---------------------------------------------------------------------------
--- War reminders (fired by the background scheduler)
+-- Reminders (war / capital / clan games), fired by the background scheduler.
 -- ---------------------------------------------------------------------------
+-- One-time migration: an earlier build shipped a different reminders table
+-- (SERIAL id, minutes_before column). Drop it once so the richer table below
+-- can be created. The guard checks for a column that only the old table has, so
+-- this is a no-op on a fresh database and never runs twice.
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'reminders' AND column_name = 'minutes_before'
+    ) THEN
+        DROP TABLE IF EXISTS reminder_logs;
+        DROP TABLE reminders;
+    END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS reminders (
-    id              SERIAL PRIMARY KEY,
-    guild_id        BIGINT NOT NULL,
-    channel_id      BIGINT NOT NULL,
-    tag             TEXT NOT NULL,
-    minutes_before  INTEGER NOT NULL,
-    min_remaining   INTEGER NOT NULL DEFAULT 1,
-    message         TEXT NOT NULL DEFAULT 'You still have war attacks remaining!',
-    role_id         BIGINT,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id                TEXT PRIMARY KEY,
+    guild_id          BIGINT NOT NULL,
+    clan_tag          TEXT NOT NULL,
+    type              TEXT NOT NULL,               -- 'war' | 'capital' | 'cg'
+    channel_id        BIGINT NOT NULL,
+    created_by        BIGINT NOT NULL,
+    message           TEXT NOT NULL DEFAULT '',
+    timing_minutes    INTEGER[] NOT NULL DEFAULT '{}',
+    threshold         INTEGER NOT NULL DEFAULT 0,
+    remaining_filter  INTEGER[] NOT NULL DEFAULT '{}',
+    member_scope      TEXT NOT NULL DEFAULT 'all', -- 'all' | 'filtered'
+    townhalls         INTEGER[] NOT NULL DEFAULT '{}',
+    roles             TEXT[] NOT NULL DEFAULT '{}',
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_reminders_guild ON reminders(guild_id);
+CREATE INDEX IF NOT EXISTS idx_reminders_clan ON reminders(clan_tag);
 
--- Records that a reminder already fired for a given war, to avoid duplicates.
+-- Records that a reminder already fired for a given event, to avoid duplicates.
 CREATE TABLE IF NOT EXISTS reminder_logs (
-    reminder_id  INTEGER NOT NULL,
+    reminder_id  TEXT NOT NULL,
     fire_key     TEXT NOT NULL,
     fired_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     PRIMARY KEY (reminder_id, fire_key)
