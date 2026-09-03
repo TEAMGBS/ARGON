@@ -2,6 +2,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands as ext_commands
 
+from utils.resolver import clan_autocomplete
+
 from .commands.create import handle as create_reminder
 from .commands.delete import handle as delete_reminder
 from .commands.list import handle as list_reminders
@@ -38,10 +40,14 @@ class reminders(ext_commands.Cog):
         self.group.command(name="create", description="Create a reminder for a clan")(
             app_commands.describe(
                 type="What the reminder is for",
-                clan_tag="Tag of a clan added to this server",
+                clan_tag="A clan added to this server",
                 message="Optional message to include",
                 channel="Channel to post in (defaults to here)",
-            )(app_commands.choices(type=_TYPE_CHOICES)(_create_command))
+            )(
+                app_commands.autocomplete(clan_tag=clan_autocomplete)(
+                    app_commands.choices(type=_TYPE_CHOICES)(_create_command)
+                )
+            )
         )
         self.group.command(name="list", description="List active reminders")(list_reminders)
         self.group.command(name="delete", description="Delete a reminder by its id")(

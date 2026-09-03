@@ -163,6 +163,11 @@ class Scheduler(commands.Cog):
         if war is None or war.state != "inWar":
             return
 
+        # Only fire for the war types this reminder is limited to (empty = all).
+        selected_types = set(r["war_types"] or [])
+        if selected_types and self._war_type(war) not in selected_types:
+            return
+
         minutes_left = war.end_time.seconds_until / 60
         timings = r["timing_minutes"] or []
         for timing in timings:
@@ -191,6 +196,13 @@ class Scheduler(commands.Cog):
                     f"to {len(laggards)} member(s) in channel {r['channel_id']}."
                 )
             await self._mark_fired(pool, r["id"], fire_key)
+
+    @staticmethod
+    def _war_type(war) -> str:
+        """Classify the current war as 'cwl', 'friendly', or 'normal'."""
+        if getattr(war, "is_cwl", False):
+            return "cwl"
+        return "friendly" if getattr(war, "type", None) == "friendly" else "normal"
 
     async def _war_laggards(self, r, war) -> list[dict]:
         """War members who still owe attacks, after the reminder's filters.

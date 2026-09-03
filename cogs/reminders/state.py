@@ -22,6 +22,7 @@ class ReminderState:
     member_scope: str = "all"
     townhalls: list[int] = field(default_factory=list)
     roles: list[str] = field(default_factory=list)
+    war_types: list[str] = field(default_factory=list)
 
     @classmethod
     def from_row(cls, row, clan_name: str) -> "ReminderState":
@@ -40,4 +41,5 @@ class ReminderState:
             member_scope=row["member_scope"],
             townhalls=list(row["townhalls"] or []),
             roles=list(row["roles"] or []),
+            war_types=list(row["war_types"] or []),
         )

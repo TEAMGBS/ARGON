@@ -37,3 +37,12 @@ TYPE_LABELS = {
     "capital": "Capital Raid Reminder",
     "cg": "Clan Games Reminder",
 }
+
+# War types a war reminder can be limited to. Empty selection = every war type.
+WAR_TYPES = [
+    ("normal", "Normal War"),
+    ("cwl", "CWL"),
+    ("friendly", "Friendly"),
+]
+
+WAR_TYPE_LABELS = {value: label for value, label in WAR_TYPES}

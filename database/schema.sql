@@ -112,8 +112,12 @@ CREATE TABLE IF NOT EXISTS reminders (
     member_scope      TEXT NOT NULL DEFAULT 'all', -- 'all' | 'filtered'
     townhalls         INTEGER[] NOT NULL DEFAULT '{}',
     roles             TEXT[] NOT NULL DEFAULT '{}',
+    war_types         TEXT[] NOT NULL DEFAULT '{}', -- subset of 'normal' | 'cwl' | 'friendly'; empty = all
     created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Added after the initial release; safe to re-run on an existing database.
+ALTER TABLE reminders ADD COLUMN IF NOT EXISTS war_types TEXT[] NOT NULL DEFAULT '{}';
 
 CREATE INDEX IF NOT EXISTS idx_reminders_guild ON reminders(guild_id);
 CREATE INDEX IF NOT EXISTS idx_reminders_clan ON reminders(clan_tag);
