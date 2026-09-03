@@ -17,13 +17,13 @@ class emoji(ext_commands.Cog):
             name="emoji", description="Manage the bot's application emojis", default_permissions=_MANAGE
         )
 
-        self.group.command(name="add", description="Mass-add application emojis from ids or mentions (owner only)")(
+        self.group.command(name="add", description="Bulk add application emojis from ids or mentions (owner only)")(
             app_commands.describe(
                 emojis="Paste emoji mentions like <:name:id> and/or 'name id' pairs, separated by spaces or new lines"
             )(add_emoji)
         )
         self.group.command(name="show", description="List the bot's application emojis (owner only)")(
-            app_commands.describe(raw="Output copy-paste lines for utils/emojis.py instead of a rendered list")(
+            app_commands.describe(raw="Output copy paste lines for utils/emojis.py instead of a rendered list")(
                 show_emoji
             )
         )
