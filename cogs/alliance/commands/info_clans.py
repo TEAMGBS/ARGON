@@ -20,6 +20,14 @@ from utils.emojis import CUSTOM, cwl_league_emoji, get_th_emoji
 
 from .add_clan import DEFAULT_CATEGORIES
 
+# Alliance branding shown on the welcome board. This is the alliance name, not the
+# Discord server name (they differ), so keep it here and edit as needed.
+ALLIANCE_NAME = "GBS FAMILY"
+ALLIANCE_DESCRIPTION = (
+    "**GBS FAMILY** is a United CoC alliance focused on teamwork, loyalty, and growth. "
+    "Active in wars, CWL, Clan Games, and Clan Capital. Fight together, win together."
+)
+
 # Categories the servers start with are shown first, in this order; anything a
 # server invented afterwards follows, alphabetically.
 _CATEGORY_ORDER = {name: i for i, name in enumerate(DEFAULT_CATEGORIES)}
@@ -163,18 +171,15 @@ class AllianceBoard(discord.ui.LayoutView):
 
         container = discord.ui.Container(accent_color=color)
 
-        # ── Welcome header (server name + logo) ──────────────────────────────
-        blurb = (guild.description or "").strip() or (
-            f"Welcome to **{guild.name}**. Browse our clans below and pick one from the menu for full details."
-        )
-        header_text = discord.ui.TextDisplay(f"## WELCOME TO {guild.name.upper()}\n➜ {blurb}")
+        # ── Welcome header (alliance name + server logo) ─────────────────────
+        header_text = discord.ui.TextDisplay(f"## WELCOME TO {ALLIANCE_NAME}\n➜ {ALLIANCE_DESCRIPTION}")
         icon_url = guild.icon.url if guild.icon else None
         if icon_url:
             container.add_item(discord.ui.Section(header_text, accessory=discord.ui.Thumbnail(icon_url)))
         else:
             container.add_item(header_text)
 
-        container.add_item(discord.ui.Separator(visible=False))
+        container.add_item(discord.ui.Separator(visible=True))
 
         # ── Clans grouped by category ────────────────────────────────────────
         grouped: dict[str, list] = {}
@@ -193,7 +198,7 @@ class AllianceBoard(discord.ui.LayoutView):
                 lines.append(f"> {icon} {clan.name} ({clan.member_count}/50)".rstrip())
         container.add_item(discord.ui.TextDisplay("\n".join(lines)[:4000]))
 
-        container.add_item(discord.ui.Separator(visible=False))
+        container.add_item(discord.ui.Separator(visible=True))
 
         # ── Select menu (first 25 clans) ─────────────────────────────────────
         options: list[discord.SelectOption] = []
@@ -213,7 +218,7 @@ class AllianceBoard(discord.ui.LayoutView):
             action_row = discord.ui.ActionRow()
             action_row.add_item(ClanSelect(options, color))
             container.add_item(action_row)
-            container.add_item(discord.ui.Separator(visible=False))
+            container.add_item(discord.ui.Separator(visible=True))
 
         # ── Footer: total players | total clans | time ───────────────────────
         container.add_item(
