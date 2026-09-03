@@ -8,6 +8,7 @@ reminder. It runs inside the reminders cog and starts once the bot is ready.
 import json
 import traceback
 
+import coc
 import discord
 from discord.ext import commands, tasks
 
@@ -138,10 +139,27 @@ class Scheduler(commands.Cog):
                 print("reminder error:\n" + traceback.format_exc())
 
     async def _eval_war_reminder(self, pool, r, poll_minutes):
+        # get_current_war covers every war type: regular, friendly, and (auto
+        # detected) CWL league wars, with attacks_per_member adapting (2 for
+        # regular/friendly, 1 for CWL). The only unreadable case is a regular war
+        # whose war log is private - the API hides the attack data (403), so we
+        # log it and move on.
+        tag = r["clan_tag"]
         try:
-            war = await self.bot.coc_client.get_current_war(r["clan_tag"])
-        except Exception:
+            war = await self.bot.coc_client.get_current_war(tag)
+        except coc.PrivateWarLog:
+            print(f"[reminder {r['id']}] {tag}: war log is private, cannot read attacks. Ask the clan to make it public.")
             return
+        except coc.Maintenance:
+            print(f"[reminder {r['id']}] {tag}: Clash of Clans API is in maintenance; retrying next tick.")
+            return
+        except coc.NotFound:
+            print(f"[reminder {r['id']}] {tag}: clan not found (bad tag?).")
+            return
+        except Exception:
+            print(f"[reminder {r['id']}] {tag}: failed to fetch current war:\n{traceback.format_exc()}")
+            return
+
         if war is None or war.state != "inWar":
             return
 
@@ -166,7 +184,12 @@ class Scheduler(commands.Cog):
                 continue
 
             content = await self._build_war_message(pool, r, war, laggards)
-            await self._send_text(r["guild_id"], r["channel_id"], content)
+            sent = await self._send_text(r["guild_id"], r["channel_id"], content)
+            if sent:
+                print(
+                    f"[reminder {r['id']}] {tag}: sent {timing}m war reminder for {war.clan.name} "
+                    f"to {len(laggards)} member(s) in channel {r['channel_id']}."
+                )
             await self._mark_fired(pool, r["id"], fire_key)
 
     async def _war_laggards(self, r, war) -> list[dict]:
@@ -243,24 +266,40 @@ class Scheduler(commands.Cog):
         )
 
     # ── Helpers ───────────────────────────────────────────────────────────────
-    async def _send_text(self, guild_id, channel_id, content: str):
-        """Send a plain-content message. Mentions only notify from message content
-        (not from inside an embed), so war reminders use this to actually ping."""
+    async def _send_text(self, guild_id, channel_id, content: str) -> bool:
+        """Send a plain-content message; returns True on success. Mentions only
+        notify from message content (not from inside an embed), so war reminders
+        use this to actually ping. Failures are logged so the reason shows up in
+        the Railway logs instead of vanishing."""
         channel = self.bot.get_channel(int(channel_id))
         if channel is None:
             try:
                 channel = await self.bot.fetch_channel(int(channel_id))
-            except Exception:
-                return
+            except discord.Forbidden:
+                print(f"[reminder] channel {channel_id} (guild {guild_id}): no access (bot not in server or missing View Channel).")
+                return False
+            except discord.NotFound:
+                print(f"[reminder] channel {channel_id} (guild {guild_id}): channel no longer exists.")
+                return False
+            except Exception as exc:
+                print(f"[reminder] channel {channel_id} (guild {guild_id}): could not fetch: {exc!r}")
+                return False
         if not isinstance(channel, discord.abc.Messageable):
-            return
+            print(f"[reminder] channel {channel_id} (guild {guild_id}): not a text channel ({type(channel).__name__}).")
+            return False
         try:
             await channel.send(
                 content=content[:2000],
                 allowed_mentions=discord.AllowedMentions(users=True, roles=False, everyone=False),
             )
-        except Exception:
-            pass
+            return True
+        except discord.Forbidden:
+            print(f"[reminder] channel {channel_id} (guild {guild_id}): missing permission to send (need Send Messages).")
+        except discord.HTTPException as exc:
+            print(f"[reminder] channel {channel_id} (guild {guild_id}): Discord rejected the message: {exc!r}")
+        except Exception as exc:
+            print(f"[reminder] channel {channel_id} (guild {guild_id}): failed to send: {exc!r}")
+        return False
 
     async def _send(self, guild_id, channel_id, title, description, content=None):
         channel = self.bot.get_channel(int(channel_id))
