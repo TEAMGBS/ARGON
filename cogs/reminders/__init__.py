@@ -6,8 +6,10 @@ from utils.resolver import clan_autocomplete
 
 from .commands.create import handle as create_reminder
 from .commands.delete import handle as delete_reminder
+from .commands.edit import handle as edit_reminder
 from .commands.list import handle as list_reminders
 from .duration import time_autocomplete
+from .lookups import reminder_autocomplete
 
 _MANAGE = discord.Permissions(manage_guild=True)
 
@@ -28,6 +30,16 @@ async def _create_command(
 ):
     # `type` is a str because the parameter is annotated str (discord.py passes the choice value).
     await create_reminder(interaction, type, clan_tag, time, message, channel)
+
+
+async def _edit_command(
+    interaction: discord.Interaction,
+    reminder_id: str,
+    time: str | None = None,
+    message: str | None = None,
+    channel: discord.TextChannel | None = None,
+):
+    await edit_reminder(interaction, reminder_id, time, message, channel)
 
 
 class reminders(ext_commands.Cog):
@@ -52,9 +64,21 @@ class reminders(ext_commands.Cog):
                 )
             )
         )
+        self.group.command(name="edit", description="Edit an existing reminder")(
+            app_commands.describe(
+                reminder_id="The reminder to edit",
+                time="New reminder time(s), e.g. 1h, 30m, 2h30m (comma-separate for several)",
+                message="Replace the reminder message",
+                channel="Move the reminder to another channel",
+            )(
+                app_commands.autocomplete(reminder_id=reminder_autocomplete, time=time_autocomplete)(_edit_command)
+            )
+        )
         self.group.command(name="list", description="List active reminders")(list_reminders)
         self.group.command(name="delete", description="Delete a reminder by its id")(
-            app_commands.describe(reminder_id="The reminder id (from /reminders list)")(delete_reminder)
+            app_commands.describe(reminder_id="The reminder to delete")(
+                app_commands.autocomplete(reminder_id=reminder_autocomplete)(delete_reminder)
+            )
         )
 
         bot.tree.add_command(self.group)
