@@ -25,6 +25,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 # reminders. More cogs will be added back as the bot grows.
 COGS = [
     "cogs.link",
+    "cogs.alliance",
     "cogs.setup",
     "cogs.reminders",
 ]

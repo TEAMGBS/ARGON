@@ -4,11 +4,17 @@ import discord
 
 from database.db import get_pool
 from utils.emojis import E_CORRECT, E_WARN, E_WRONG
+from utils.tags import normalize_tag
 
 GREEN = 0x57F287
 RED = 0xED4245
 YELLOW = 0xFEE75C
 BLURPLE = 0x5865F2
+
+
+def format_tag(raw: str) -> str:
+    """Normalize a Clash of Clans tag (uppercase, single leading '#')."""
+    return normalize_tag(raw)
 
 
 def success_embed(message: str) -> discord.Embed:

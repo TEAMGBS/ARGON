@@ -17,6 +17,19 @@ from utils.embeds import guild_color
 from utils.emojis import E_DONATE, E_RECEIVE, E_SWORD, E_UP, E_DOWN, E_CLAN
 from utils.helpers import discord_relative
 
+# Map the raw Clash of Clans API role value to the values stored by the reminder
+# config (the API uses "admin" for what the game shows as Elder).
+_API_TO_ROLE = {
+    "leader": "leader",
+    "coLeader": "coLeader",
+    "admin": "elder",
+    "member": "member",
+}
+
+
+def _role_value(role) -> str:
+    return _API_TO_ROLE.get(getattr(role, "value", str(role)), "")
+
 
 class Scheduler(commands.Cog):
     def __init__(self, bot):
@@ -111,54 +124,89 @@ class Scheduler(commands.Cog):
         if lines:
             await self._send(guild_id, channel_id, f"{E_CLAN} {clan_name}, Donation Log", "\n".join(lines))
 
-    # ── War reminders ─────────────────────────────────────────────────────────
+    # ── Reminders ─────────────────────────────────────────────────────────────
     async def _run_reminders(self, pool):
         reminders = await pool.fetch("SELECT * FROM reminders")
         poll_minutes = max(30, POLL_INTERVAL_SECONDS) / 60
         for r in reminders:
             try:
-                await self._eval_reminder(pool, r, poll_minutes)
+                # Only war reminders fire for now; capital/cg firing is a roadmap
+                # item (their attack/points data pipelines are not built yet).
+                if r["type"] == "war":
+                    await self._eval_war_reminder(pool, r, poll_minutes)
             except Exception:
                 print("reminder error:\n" + traceback.format_exc())
 
-    async def _eval_reminder(self, pool, r, poll_minutes):
+    async def _eval_war_reminder(self, pool, r, poll_minutes):
         try:
-            war = await self.bot.coc_client.get_current_war(r["tag"])
+            war = await self.bot.coc_client.get_current_war(r["clan_tag"])
         except Exception:
             return
         if war is None or war.state != "inWar":
             return
 
         minutes_left = war.end_time.seconds_until / 60
-        target = r["minutes_before"]
-        # Fire once when we enter the [target, target - poll) window.
-        if minutes_left > target or minutes_left < target - poll_minutes:
-            return
+        timings = r["timing_minutes"] or []
+        for timing in timings:
+            # Fire once when we enter the [timing - poll, timing] window.
+            if not (timing - poll_minutes <= minutes_left <= timing):
+                continue
 
-        fire_key = f"{war.end_time.raw_time}:{target}"
-        exists = await pool.fetchval(
-            "SELECT 1 FROM reminder_logs WHERE reminder_id = $1 AND fire_key = $2", r["id"], fire_key
-        )
-        if exists:
-            return
+            fire_key = f"{war.end_time.raw_time}:{timing}"
+            exists = await pool.fetchval(
+                "SELECT 1 FROM reminder_logs WHERE reminder_id = $1 AND fire_key = $2", r["id"], fire_key
+            )
+            if exists:
+                continue
 
+            laggards = await self._war_laggards(r, war)
+            if not laggards:
+                # Still record the fire so we don't re-check this window every tick.
+                await self._mark_fired(pool, r["id"], fire_key)
+                continue
+
+            body = "\n".join(
+                [line for line in (r["message"],) if line]
+                + ["", f"War ends {discord_relative(war.end_time.time)}.", "", *laggards[:40]]
+            )
+            await self._send(r["guild_id"], r["channel_id"], f"{E_SWORD} War Reminder, {war.clan.name}", body)
+            await self._mark_fired(pool, r["id"], fire_key)
+
+    async def _war_laggards(self, r, war) -> list[str]:
         per_member = war.attacks_per_member or 2
-        laggards = [
-            f"• **{m.name}**, {per_member - len(m.attacks)} left"
-            for m in war.clan.members
-            if per_member - len(m.attacks) >= r["min_remaining"]
-        ]
-        if not laggards:
-            return
+        remaining_filter = set(r["remaining_filter"] or [])
+        townhalls = set(r["townhalls"] or [])
+        roles = set(r["roles"] or [])
+        filtered = r["member_scope"] == "filtered"
 
-        body = "\n".join(
-            [r["message"], "", f"War ends {discord_relative(war.end_time.time)}.", "", *laggards[:40]]
-        )
-        content = f"<@&{r['role_id']}>" if r["role_id"] else None
-        await self._send(r["guild_id"], r["channel_id"], f"{E_SWORD} War Reminder, {war.clan.name}", body, content)
+        # Only fetch clan roles when a role filter is actually set.
+        role_by_tag: dict[str, str] = {}
+        if filtered and roles:
+            try:
+                clan = await self.bot.coc_client.get_clan(r["clan_tag"])
+                role_by_tag = {m.tag: _role_value(m.role) for m in clan.members}
+            except Exception:
+                role_by_tag = {}
+
+        lines = []
+        for m in war.clan.members:
+            remaining = per_member - len(m.attacks)
+            if remaining <= 0:
+                continue
+            if remaining_filter and remaining not in remaining_filter:
+                continue
+            if filtered:
+                if townhalls and m.town_hall not in townhalls:
+                    continue
+                if roles and role_by_tag.get(m.tag) not in roles:
+                    continue
+            lines.append(f"• **{m.name}**, {remaining} left")
+        return lines
+
+    async def _mark_fired(self, pool, reminder_id, fire_key):
         await pool.execute(
             "INSERT INTO reminder_logs (reminder_id, fire_key) VALUES ($1, $2) ON CONFLICT DO NOTHING",
-            r["id"],
+            reminder_id,
             fire_key,
         )
 
