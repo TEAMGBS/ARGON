@@ -75,7 +75,14 @@ def build_clan_card(clan: coc.Clan, color: discord.Color) -> discord.ui.LayoutVi
     league_name = clan.war_league.name if getattr(clan, "war_league", None) else "Unranked"
     league_icon = cwl_league_emoji(league_name)
     th_level = getattr(clan, "required_townhall_level", None)
-    th = f"{get_th_emoji(th_level)} TH{th_level}" if th_level else "Any"
+    if th_level:
+        th_label = f"TH{th_level}"
+        th_icon = get_th_emoji(th_level)
+        # get_th_emoji returns the label text itself when no custom emoji exists;
+        # only prefix the icon when it is a real emoji, else we'd show "TH15 TH15".
+        th = f"{th_icon} {th_label}" if th_icon != th_label else th_label
+    else:
+        th = "Any"
     location = clan.location.name if getattr(clan, "location", None) else "N/A"
 
     # War/tie totals are only exposed when a clan's war log is public.
