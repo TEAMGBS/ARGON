@@ -8,6 +8,7 @@ from database import clans as clans_db
 from database import reminders as reminders_db
 
 from ..constants import TYPE_LABELS
+from ..duration import format_minutes
 
 
 async def handle(interaction: discord.Interaction) -> None:
@@ -26,7 +27,7 @@ async def handle(interaction: discord.Interaction) -> None:
             clan_row = await clans_db.get_clan(interaction.guild_id, tag)
             clan_names[tag] = clan_row["name"] if clan_row else tag
         label = TYPE_LABELS.get(row["type"], row["type"])
-        timing = ", ".join(f"{m}m" for m in (row["timing_minutes"] or []))
+        timing = ", ".join(format_minutes(m) for m in (row["timing_minutes"] or []))
         lines_by_clan.setdefault(tag, []).append(
             f"`{row['id']}` {label}, channel <#{row['channel_id']}>, timing: {timing or 'not set'}"
         )
