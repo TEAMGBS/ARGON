@@ -129,3 +129,50 @@ CREATE TABLE IF NOT EXISTS reminder_logs (
     fired_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     PRIMARY KEY (reminder_id, fire_key)
 );
+
+
+-- ---------------------------------------------------------------------------
+-- Legend League ranked tracking
+-- ---------------------------------------------------------------------------
+-- Per-guild channel that receives legend attack/defense notifications.
+CREATE TABLE IF NOT EXISTS ranked_settings (
+    guild_id    BIGINT PRIMARY KEY,
+    channel_id  BIGINT NOT NULL,
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Players a guild is tracking. The same tag can be tracked by several guilds.
+CREATE TABLE IF NOT EXISTS ranked_tracked (
+    guild_id    BIGINT NOT NULL,
+    tag         TEXT NOT NULL,
+    name        TEXT NOT NULL,
+    added_by    BIGINT NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (guild_id, tag)
+);
+
+CREATE INDEX IF NOT EXISTS idx_ranked_tracked_tag ON ranked_tracked(tag);
+
+-- Last-seen trophy count per tracked tag (the poller diffs against this). One
+-- row per tag globally, shared by every guild tracking that player.
+CREATE TABLE IF NOT EXISTS ranked_state (
+    tag         TEXT PRIMARY KEY,
+    name        TEXT,
+    trophies    INTEGER NOT NULL,
+    season      TEXT NOT NULL,
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Every attack/defense the poller detected (a trophy rise/fall in Legend League).
+CREATE TABLE IF NOT EXISTS ranked_events (
+    id             BIGSERIAL PRIMARY KEY,
+    tag            TEXT NOT NULL,
+    season         TEXT NOT NULL,          -- CoC season key, e.g. '2026-09'
+    direction      TEXT NOT NULL,          -- 'attack' | 'defense'
+    delta          INTEGER NOT NULL,       -- signed trophy change (+ attack, - defense)
+    trophies_after INTEGER NOT NULL,
+    occurred_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_ranked_events_tag_season ON ranked_events(tag, season);
+CREATE INDEX IF NOT EXISTS idx_ranked_events_occurred ON ranked_events(occurred_at);

@@ -29,6 +29,7 @@ COGS = [
     "cogs.setup",
     "cogs.reminders",
     "cogs.emoji",
+    "cogs.ranked",
 ]
 
 
