@@ -203,7 +203,10 @@ class ReminderConfigView(discord.ui.LayoutView):
 
     async def on_save(self, interaction: discord.Interaction) -> None:
         if not self.state.timing_minutes:
-            await interaction.response.send_message("Select at least one reminder timing before saving.", ephemeral=True)
+            await interaction.response.send_message(
+                "This reminder has no time set. Re-run the command with a `time` like `1h` or `2h30m`.",
+                ephemeral=True,
+            )
             return
 
         await interaction.response.defer()
