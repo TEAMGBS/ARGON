@@ -38,5 +38,14 @@ def legend_day_start(now: datetime | None = None) -> datetime:
 
 
 def week_start(now: datetime | None = None) -> datetime:
-    """Start of a rolling 7-day window ending now (used for 'Week Off/Def')."""
-    return (now or now_utc()) - timedelta(days=7)
+    """Start of the current ranked week: the most recent Monday at 05:00 UTC.
+
+    Ranked attacks reset weekly, so the card and the notification tallies only
+    ever cover the current week; older events are pruned.
+    """
+    now = now or now_utc()
+    reset = now.replace(hour=RESET_HOUR, minute=0, second=0, microsecond=0)
+    monday = reset - timedelta(days=reset.weekday())  # Monday == 0
+    if now < monday:
+        monday -= timedelta(days=7)
+    return monday

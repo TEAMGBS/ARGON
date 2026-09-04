@@ -126,6 +126,13 @@ async def events_for_season(tag: str, season: str):
     )
 
 
+async def prune_events_before(before) -> None:
+    """Drop events older than `before` - ranked attacks reset weekly, so we only
+    keep the current week."""
+    pool = await get_pool()
+    await pool.execute("DELETE FROM ranked_events WHERE occurred_at < $1", before)
+
+
 # ── Autocomplete source ───────────────────────────────────────────────────────
 async def known_tags(query: str, limit: int = 25):
     """Tags the bot has seen before (tracked, linked, or previously polled),

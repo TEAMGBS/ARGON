@@ -16,7 +16,7 @@ from discord.ext import commands, tasks
 from database import ranked as ranked_db
 
 from .notify import build_notification
-from .season import season_key
+from .season import season_key, week_start
 
 # Trophy swings larger than this are treated as anomalies (season reset, league
 # promotion/demotion, data glitch) and never recorded as an attack/defense.
@@ -47,6 +47,12 @@ class RankedTracker(commands.Cog):
         await self.bot.wait_until_ready()
 
     async def _run(self):
+        # Ranked attacks reset weekly; drop anything from before this week.
+        try:
+            await ranked_db.prune_events_before(week_start())
+        except Exception:
+            pass
+
         tags = await ranked_db.all_tracked_tags()
         if not tags:
             return

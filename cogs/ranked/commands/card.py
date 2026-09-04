@@ -16,7 +16,7 @@ from utils.embeds import error_embed, format_tag
 from utils.tags import is_valid_tag
 
 from ..render import render_card
-from ..season import season_key
+from ..season import week_start
 
 
 async def handle(interaction: discord.Interaction, tag: str) -> None:
@@ -32,7 +32,7 @@ async def handle(interaction: discord.Interaction, tag: str) -> None:
         await interaction.followup.send(embed=error_embed(f"No player found for `{tag}`."))
         return
 
-    events = await ranked_db.events_for_season(tag, season_key())
+    events = await ranked_db.events_since(tag, week_start())
 
     rank = None
     stats = getattr(player, "legend_statistics", None)
@@ -57,7 +57,7 @@ async def handle(interaction: discord.Interaction, tag: str) -> None:
     content = None
     if not events:
         content = (
-            "_No recorded legend attacks this season for this player. "
+            "_No recorded attacks this week for this player. "
             "Track them with `/ranked track-player` to start recording._"
         )
     await interaction.followup.send(content=content, file=discord.File(io.BytesIO(png), filename="legend.png"))
