@@ -72,8 +72,6 @@ class RankedTracker(commands.Cog):
 
         trophies = player.trophies
         name = player.name
-        league = (player.league.name if getattr(player, "league", None) else "") or ""
-        in_legend = "legend" in league.lower() or trophies >= 5000
 
         state = await ranked_db.get_state(tag)
 
@@ -88,8 +86,10 @@ class RankedTracker(commands.Cog):
                 await ranked_db.set_state(tag, name, trophies, season)
             return
 
+        # Record trophy moves in every league (a rise is an attack, a fall a
+        # defense). The sane-delta guard skips season resets and other anomalies.
         delta = trophies - prev
-        if in_legend and abs(delta) <= _MAX_SANE_DELTA:
+        if abs(delta) <= _MAX_SANE_DELTA:
             direction = "attack" if delta > 0 else "defense"
             await ranked_db.add_event(tag, season, direction, delta, trophies)
             await self._notify(tag, name, direction, delta, trophies)
