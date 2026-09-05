@@ -20,16 +20,6 @@ ENDED_WIN = 0x57F287
 ENDED_LOSE = 0xED4245
 ENDED_TIE = 0xFEE75C
 
-PHASE_LABELS = {
-    "prep": "Preparation Day",
-    "start": "Battle Day — War Started",
-    "18h": "Battle Day — 18 hours left",
-    "12h": "Battle Day — 12 hours left",
-    "6h": "Battle Day — 6 hours left",
-    "end": "War Ended",
-}
-
-
 def _attacks_used(side) -> int:
     return sum(len(getattr(m, "attacks", []) or []) for m in getattr(side, "members", []) or [])
 
@@ -53,11 +43,8 @@ def _result(war) -> tuple[str, int]:
     return "🤝 Draw", ENDED_TIE
 
 
-def build_war_embed(war, event: str) -> discord.Embed:
-    label = PHASE_LABELS.get(event, "Clan War")
-    color = PREP if event == "prep" else ENDING if event in ("18h", "12h", "6h") else BATTLE
-
-    if event == "end":
+def build_war_embed(war, label: str, color: int, ended: bool = False) -> discord.Embed:
+    if ended:
         label, color = _result(war)
 
     embed = discord.Embed(title=f"{war.clan.name}  vs  {war.opponent.name}", description=f"**{label}**", color=color)
