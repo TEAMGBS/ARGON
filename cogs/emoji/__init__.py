@@ -4,6 +4,7 @@ from discord.ext import commands as ext_commands
 
 from .categories import category_autocomplete
 from .commands.add import handle as add_emoji
+from .commands.categorize import handle as categorize_emoji
 from .commands.show import handle as show_emoji
 
 _MANAGE = discord.Permissions(manage_guild=True)
@@ -29,6 +30,12 @@ class emoji(ext_commands.Cog):
                 raw="Output copy paste lines for utils/emojis.py instead of a rendered list",
                 category="Show only this category",
             )(app_commands.autocomplete(category=category_autocomplete)(show_emoji))
+        )
+        self.group.command(name="categorize", description="File existing emojis into a category by a name match (owner only)")(
+            app_commands.describe(
+                category="Category to file the matching emojis under",
+                match="Only emojis whose name contains this (e.g. cwl, TH); blank = all",
+            )(app_commands.autocomplete(category=category_autocomplete)(categorize_emoji))
         )
 
         bot.tree.add_command(self.group)
