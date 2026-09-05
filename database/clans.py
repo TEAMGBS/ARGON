@@ -29,6 +29,8 @@ async def remove_clan(guild_id: int, tag: str) -> bool:
     await pool.execute("DELETE FROM clan_logs WHERE guild_id = $1 AND tag = $2", guild_id, tag)
     await pool.execute("DELETE FROM clan_snapshots WHERE guild_id = $1 AND tag = $2", guild_id, tag)
     await pool.execute("DELETE FROM reminders WHERE guild_id = $1 AND clan_tag = $2", guild_id, tag)
+    await pool.execute("DELETE FROM war_logs WHERE guild_id = $1 AND tag = $2", guild_id, tag)
+    await pool.execute("DELETE FROM war_log_progress WHERE guild_id = $1 AND tag = $2", guild_id, tag)
     return not result.endswith("0")
 
 

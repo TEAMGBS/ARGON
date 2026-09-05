@@ -1,11 +1,9 @@
-"""Background scheduler: fires due war reminders and posts clan feed logs.
+"""Background scheduler: fires due war reminders.
 
-This is the Python equivalent of ClashPerk's feed/reminder pipeline, kept simple
-and self-contained: a single loop polls each linked clan and each configured
-reminder. It runs inside the reminders cog and starts once the bot is ready.
+A single loop evaluates each configured reminder every tick. It runs inside the
+reminders cog and starts once the bot is ready.
 """
 
-import json
 import traceback
 
 import coc
@@ -14,8 +12,7 @@ from discord.ext import commands, tasks
 
 from config import POLL_INTERVAL_SECONDS
 from database.db import get_pool
-from utils.embeds import guild_color
-from utils.emojis import E_DONATE, E_RECEIVE, E_UP, E_DOWN, E_CLAN, get_th_emoji
+from utils.emojis import get_th_emoji
 from utils.helpers import discord_relative
 
 # Map the raw Clash of Clans API role value to the values stored by the reminder
@@ -47,7 +44,6 @@ class Scheduler(commands.Cog):
     async def poll(self):
         try:
             pool = await get_pool()
-            await self._run_feeds(pool)
             await self._run_reminders(pool)
         except Exception:
             print("Scheduler tick failed:\n" + traceback.format_exc())
@@ -55,75 +51,6 @@ class Scheduler(commands.Cog):
     @poll.before_loop
     async def _before(self):
         await self.bot.wait_until_ready()
-
-    # ── Clan feed: member join/leave + donation deltas ────────────────────────
-    async def _run_feeds(self, pool):
-        rows = await pool.fetch("SELECT DISTINCT guild_id, tag FROM clan_logs")
-        for row in rows:
-            try:
-                await self._poll_clan(pool, row["guild_id"], row["tag"])
-            except Exception:
-                print("feed error:\n" + traceback.format_exc())
-
-    async def _poll_clan(self, pool, guild_id, tag):
-        logs = {
-            r["log_type"]: r["channel_id"]
-            for r in await pool.fetch(
-                "SELECT log_type, channel_id FROM clan_logs WHERE guild_id = $1 AND tag = $2", guild_id, tag
-            )
-        }
-        if not logs:
-            return
-
-        try:
-            clan = await self.bot.coc_client.get_clan(tag)
-        except Exception:
-            return
-
-        current = {
-            m.tag: {"name": m.name, "role": str(m.role), "donations": m.donations, "received": m.received}
-            for m in clan.members
-        }
-
-        snap = await pool.fetchrow("SELECT members FROM clan_snapshots WHERE guild_id = $1 AND tag = $2", guild_id, tag)
-        if snap is not None:
-            previous = json.loads(snap["members"]) if isinstance(snap["members"], str) else snap["members"]
-            if logs.get("member"):
-                await self._post_member_changes(guild_id, logs["member"], clan.name, previous, current)
-            if logs.get("donation"):
-                await self._post_donation_changes(guild_id, logs["donation"], clan.name, previous, current)
-
-        await pool.execute(
-            """INSERT INTO clan_snapshots (guild_id, tag, members, updated_at) VALUES ($1, $2, $3, NOW())
-               ON CONFLICT (guild_id, tag) DO UPDATE SET members = EXCLUDED.members, updated_at = NOW()""",
-            guild_id,
-            tag,
-            json.dumps(current),
-        )
-
-    async def _post_member_changes(self, guild_id, channel_id, clan_name, prev, curr):
-        joined = [t for t in curr if t not in prev]
-        left = [t for t in prev if t not in curr]
-        if not joined and not left:
-            return
-        lines = [f"{E_UP} **{curr[t]['name']}** `{t}` joined" for t in joined]
-        lines += [f"{E_DOWN} **{prev[t]['name']}** `{t}` left" for t in left]
-        await self._send(guild_id, channel_id, f"{E_CLAN} {clan_name}, Member Log", "\n".join(lines))
-
-    async def _post_donation_changes(self, guild_id, channel_id, clan_name, prev, curr):
-        lines = []
-        for t, data in curr.items():
-            before = prev.get(t)
-            if not before:
-                continue
-            donated = data["donations"] - before["donations"]
-            received = data["received"] - before["received"]
-            if donated > 0:
-                lines.append(f"{E_DONATE} **{data['name']}** donated `{donated}`")
-            if received > 0:
-                lines.append(f"{E_RECEIVE} **{data['name']}** received `{received}`")
-        if lines:
-            await self._send(guild_id, channel_id, f"{E_CLAN} {clan_name}, Donation Log", "\n".join(lines))
 
     # ── Reminders ─────────────────────────────────────────────────────────────
     async def _run_reminders(self, pool):
@@ -335,19 +262,3 @@ class Scheduler(commands.Cog):
         except Exception as exc:
             print(f"[reminder] channel {channel_id} (guild {guild_id}): failed to send: {exc!r}")
         return False
-
-    async def _send(self, guild_id, channel_id, title, description, content=None):
-        channel = self.bot.get_channel(int(channel_id))
-        if channel is None:
-            try:
-                channel = await self.bot.fetch_channel(int(channel_id))
-            except Exception:
-                return
-        if not isinstance(channel, discord.abc.Messageable):
-            return
-        color = await guild_color(guild_id)
-        embed = discord.Embed(title=title, description=description[:4000], color=color)
-        try:
-            await channel.send(content=content, embed=embed)
-        except Exception:
-            pass

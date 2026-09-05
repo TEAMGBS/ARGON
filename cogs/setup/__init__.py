@@ -2,31 +2,27 @@ import discord
 from discord import app_commands
 from discord.ext import commands as ext_commands
 
-from .commands.log import log
+from utils.resolver import clan_autocomplete
 
-# Log-type choices for /setup log.
-_LOG_CHOICES = [
-    app_commands.Choice(name="Member join/leave log", value="member"),
-    app_commands.Choice(name="Donation log", value="donation"),
-    app_commands.Choice(name="Clan feed", value="feed"),
-]
+from .commands.war_logs import handle as war_logs
 
 _MANAGE = discord.Permissions(manage_guild=True)
 
 
 class ServerSetup(ext_commands.Cog):
-    """Configure logs for the clans added to this server (via /alliance add-clan)."""
+    """Configure war logs for the clans added to this server (via /alliance add-clan)."""
 
     def __init__(self, bot):
         self.bot = bot
 
         self.setup_group = app_commands.Group(
-            name="setup", description="Configure clan logs", default_permissions=_MANAGE, guild_only=True
+            name="setup", description="Configure clan war logs", default_permissions=_MANAGE, guild_only=True
         )
-        self.setup_group.command(name="log", description="Enable a log/feed for a clan in a channel")(
-            app_commands.describe(tag="Clan tag", log_type="Which log to enable", channel="Target channel")(
-                app_commands.choices(log_type=_LOG_CHOICES)(log)
-            )
+        self.setup_group.command(name="war-logs", description="Post a clan's war hits and war-phase updates to a channel")(
+            app_commands.describe(
+                clan="An alliance clan (added with /alliance add-clan)",
+                channel="Channel to post war logs in (defaults to here)",
+            )(app_commands.autocomplete(clan=clan_autocomplete)(war_logs))
         )
 
         bot.tree.add_command(self.setup_group)
@@ -36,4 +32,7 @@ class ServerSetup(ext_commands.Cog):
 
 
 async def setup(bot):
+    from .tasks import WarLogScheduler
+
     await bot.add_cog(ServerSetup(bot))
+    await bot.add_cog(WarLogScheduler(bot))
