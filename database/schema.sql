@@ -132,6 +132,16 @@ CREATE TABLE IF NOT EXISTS reminder_logs (
 
 
 -- ---------------------------------------------------------------------------
+-- Application-emoji categories (bot-global; Discord has no native categories)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS emoji_categories (
+    name        TEXT PRIMARY KEY,       -- application emoji name
+    category    TEXT NOT NULL,
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+
+-- ---------------------------------------------------------------------------
 -- War logs: per-clan channel for the attack feed and war-phase embeds
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS war_logs (
