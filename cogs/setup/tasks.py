@@ -18,7 +18,7 @@ from discord.ext import commands, tasks
 from cogs.reminders.duration import format_minutes
 from database import warlogs as warlogs_db
 
-from .warembed import BATTLE, ENDING, PREP, attack_lines, build_war_embed
+from .warembed import BATTLE, ENDING, PREP, attack_lines, build_war_view
 
 POLL_SECONDS = 60
 
@@ -126,17 +126,17 @@ class WarLogScheduler(commands.Cog):
             await warlogs_db.set_progress(guild_id, tag, war_key, current_max, posted)
             if applicable:
                 key, label, color, ended = applicable[-1]
-                await self._send(channel_id, embed=build_war_embed(war, label, color, ended))
+                await self._send(channel_id, view=build_war_view(war, label, color, ended))
             return
 
         posted = list(progress["events"] or [])
         last_order = progress["last_order"] or 0
 
-        # New phase embeds.
+        # New phase boards.
         for key, label, color, ended in applicable:
             if key in posted:
                 continue
-            await self._send(channel_id, embed=build_war_embed(war, label, color, ended))
+            await self._send(channel_id, view=build_war_view(war, label, color, ended))
             posted.append(key)
 
         # New attack/defense feed lines.
@@ -146,7 +146,7 @@ class WarLogScheduler(commands.Cog):
 
         await warlogs_db.set_progress(guild_id, tag, war_key, max(last_order, new_max), posted)
 
-    async def _send(self, channel_id, *, content=None, embed=None):
+    async def _send(self, channel_id, *, content=None, view=None):
         channel = self.bot.get_channel(int(channel_id))
         if channel is None:
             try:
@@ -157,7 +157,10 @@ class WarLogScheduler(commands.Cog):
         if not isinstance(channel, discord.abc.Messageable):
             return
         try:
-            await channel.send(content=content, embed=embed)
+            if view is not None:
+                await channel.send(view=view)
+            else:
+                await channel.send(content=content)
         except discord.Forbidden:
             print(f"[warlog] channel {channel_id}: missing permission to send.")
         except Exception as exc:
