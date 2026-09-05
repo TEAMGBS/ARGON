@@ -281,9 +281,9 @@ class Scheduler(commands.Cog):
         linked = [line(m, link_map[m["tag"]]) for m in laggards if m["tag"] in link_map]
         unlinked = [line(m, None) for m in laggards if m["tag"] not in link_map]
 
-        parts = [f"🔔 **{war.clan.name} (War ends {discord_relative(war.end_time.time)})**"]
+        parts = [f"**{war.clan.name} (War ends {discord_relative(war.end_time.time)})**"]
         if r["message"]:
-            parts.append(f"✉️ {r['message']}")
+            parts.append(f"{r['message']}")
         parts.append("")
 
         body = linked[:40]
