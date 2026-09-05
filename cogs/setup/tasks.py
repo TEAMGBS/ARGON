@@ -34,6 +34,13 @@ def _war_key(war) -> str:
     return getattr(end, "raw_time", None) or "current"
 
 
+def _war_type(war) -> str:
+    """Classify the current war as 'cwl', 'friendly', or 'normal'."""
+    if getattr(war, "is_cwl", False):
+        return "cwl"
+    return "friendly" if getattr(war, "type", None) == "friendly" else "normal"
+
+
 def _applicable_events(war) -> list[str]:
     """Phase events that are currently true for this war."""
     state = war.state
@@ -93,9 +100,13 @@ class WarLogScheduler(commands.Cog):
 
         war_key = _war_key(war)
         applicable = _applicable_events(war)
-        lines, current_max = attack_lines(war, since_order=0)  # full list; per-guild we filter by last_order
+        _, current_max = attack_lines(war, since_order=0)  # only need the max attack order for seeding
+        war_type = _war_type(war)
 
         for row in channels:
+            # Skip guilds that limited their war logs to a different war type.
+            if row["war_type"] and row["war_type"] != war_type:
+                continue
             await self._process_guild(row["guild_id"], row["channel_id"], tag, war, war_key, applicable, current_max)
 
     async def _process_guild(self, guild_id, channel_id, tag, war, war_key, applicable, current_max):

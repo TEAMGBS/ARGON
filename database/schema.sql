@@ -138,9 +138,13 @@ CREATE TABLE IF NOT EXISTS war_logs (
     guild_id    BIGINT NOT NULL,
     tag         TEXT NOT NULL,
     channel_id  BIGINT NOT NULL,
+    war_type    TEXT NOT NULL DEFAULT '',  -- '' = all, else 'normal' | 'cwl' | 'friendly'
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     PRIMARY KEY (guild_id, tag)
 );
+
+-- Added after the initial release; safe to re-run on an existing database.
+ALTER TABLE war_logs ADD COLUMN IF NOT EXISTS war_type TEXT NOT NULL DEFAULT '';
 
 CREATE INDEX IF NOT EXISTS idx_war_logs_tag ON war_logs(tag);
 

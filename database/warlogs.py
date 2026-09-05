@@ -5,14 +5,16 @@ from __future__ import annotations
 from database.db import get_pool
 
 
-async def set_channel(guild_id: int, tag: str, channel_id: int) -> None:
+async def set_channel(guild_id: int, tag: str, channel_id: int, war_type: str = "") -> None:
     pool = await get_pool()
     await pool.execute(
-        """INSERT INTO war_logs (guild_id, tag, channel_id) VALUES ($1, $2, $3)
-           ON CONFLICT (guild_id, tag) DO UPDATE SET channel_id = EXCLUDED.channel_id""",
+        """INSERT INTO war_logs (guild_id, tag, channel_id, war_type) VALUES ($1, $2, $3, $4)
+           ON CONFLICT (guild_id, tag)
+           DO UPDATE SET channel_id = EXCLUDED.channel_id, war_type = EXCLUDED.war_type""",
         guild_id,
         tag,
         channel_id,
+        war_type,
     )
 
 
@@ -30,7 +32,7 @@ async def all_tags() -> list[str]:
 
 async def channels_for_tag(tag: str):
     pool = await get_pool()
-    return await pool.fetch("SELECT guild_id, channel_id FROM war_logs WHERE tag = $1", tag)
+    return await pool.fetch("SELECT guild_id, channel_id, war_type FROM war_logs WHERE tag = $1", tag)
 
 
 async def get_progress(guild_id: int, tag: str, war_key: str):

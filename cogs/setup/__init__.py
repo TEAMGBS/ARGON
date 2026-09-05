@@ -8,6 +8,12 @@ from .commands.war_logs import handle as war_logs
 
 _MANAGE = discord.Permissions(manage_guild=True)
 
+_WAR_TYPE_CHOICES = [
+    app_commands.Choice(name="Normal", value="normal"),
+    app_commands.Choice(name="CWL", value="cwl"),
+    app_commands.Choice(name="Friendly", value="friendly"),
+]
+
 
 class ServerSetup(ext_commands.Cog):
     """Configure war logs for the clans added to this server (via /alliance add-clan)."""
@@ -21,8 +27,13 @@ class ServerSetup(ext_commands.Cog):
         self.setup_group.command(name="war-logs", description="Post a clan's war hits and war-phase updates to a channel")(
             app_commands.describe(
                 clan="An alliance clan (added with /alliance add-clan)",
+                type="Which war type to log (defaults to all)",
                 channel="Channel to post war logs in (defaults to here)",
-            )(app_commands.autocomplete(clan=clan_autocomplete)(war_logs))
+            )(
+                app_commands.autocomplete(clan=clan_autocomplete)(
+                    app_commands.choices(type=_WAR_TYPE_CHOICES)(war_logs)
+                )
+            )
         )
 
         bot.tree.add_command(self.setup_group)
