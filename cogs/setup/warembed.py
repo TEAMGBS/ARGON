@@ -41,6 +41,26 @@ def _result(war) -> tuple[str, int]:
     return "🤝 Draw", ENDED_TIE
 
 
+def war_type(war) -> str:
+    """Classify the current war as 'cwl', 'friendly', or 'normal'."""
+    if getattr(war, "is_cwl", False):
+        return "cwl"
+    return "friendly" if getattr(war, "type", None) == "friendly" else "normal"
+
+
+def phase_meta(war) -> tuple[str, int, bool]:
+    """(label, colour, ended) for the war's current phase - used by /war info."""
+    state = war.state
+    if state == "preparation":
+        return "Preparation Day", PREP, False
+    if state == "inWar":
+        minutes_left = war.end_time.seconds_until / 60
+        return "Battle Day", (ENDING if minutes_left <= 360 else BATTLE), False
+    if state == "warEnded":
+        return "War Ended", BATTLE, True
+    return "Clan War", BATTLE, False
+
+
 def _clan_link(tag: str) -> str:
     return f"https://link.clashofclans.com/en?action=OpenClanProfile&tag={quote(tag)}"
 
