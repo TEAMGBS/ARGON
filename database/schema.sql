@@ -132,6 +132,32 @@ CREATE TABLE IF NOT EXISTS reminder_logs (
 
 
 -- ---------------------------------------------------------------------------
+-- War logs: per-clan channel for the attack feed and war-phase embeds
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS war_logs (
+    guild_id    BIGINT NOT NULL,
+    tag         TEXT NOT NULL,
+    channel_id  BIGINT NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (guild_id, tag)
+);
+
+CREATE INDEX IF NOT EXISTS idx_war_logs_tag ON war_logs(tag);
+
+-- Per (guild, clan, war) progress: how many attacks have been posted and which
+-- phase embeds have fired, so nothing is posted twice.
+CREATE TABLE IF NOT EXISTS war_log_progress (
+    guild_id    BIGINT NOT NULL,
+    tag         TEXT NOT NULL,
+    war_key     TEXT NOT NULL,
+    last_order  INTEGER NOT NULL DEFAULT 0,
+    events      TEXT[] NOT NULL DEFAULT '{}',
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (guild_id, tag, war_key)
+);
+
+
+-- ---------------------------------------------------------------------------
 -- Legend League ranked tracking
 -- ---------------------------------------------------------------------------
 -- Per-guild channel that receives legend attack/defense notifications.
