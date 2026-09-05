@@ -135,6 +135,7 @@ CREATE TABLE IF NOT EXISTS reminder_logs (
 -- War logs: per-clan channel for the attack feed and war-phase embeds
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS war_logs (
+    id          TEXT,
     guild_id    BIGINT NOT NULL,
     tag         TEXT NOT NULL,
     channel_id  BIGINT NOT NULL,
@@ -145,8 +146,12 @@ CREATE TABLE IF NOT EXISTS war_logs (
 
 -- Added after the initial release; safe to re-run on an existing database.
 ALTER TABLE war_logs ADD COLUMN IF NOT EXISTS war_type TEXT NOT NULL DEFAULT '';
+ALTER TABLE war_logs ADD COLUMN IF NOT EXISTS id TEXT;
+-- Backfill a short id for any rows created before the id column existed.
+UPDATE war_logs SET id = upper(substr(md5(random()::text || tag), 1, 6)) WHERE id IS NULL;
 
 CREATE INDEX IF NOT EXISTS idx_war_logs_tag ON war_logs(tag);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_war_logs_id ON war_logs(id);
 
 -- Per (guild, clan, war) progress: how many attacks have been posted and which
 -- phase embeds have fired, so nothing is posted twice.

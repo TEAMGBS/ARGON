@@ -28,13 +28,13 @@ async def handle(
 
     war_type = type or ""  # "" means every war type
     target = channel or interaction.channel
-    await warlogs_db.set_channel(interaction.guild_id, tag, target.id, war_type)
+    log_id = await warlogs_db.set_channel(interaction.guild_id, tag, target.id, war_type)
 
     scope = f"**{war_type.upper()}** wars" if war_type else "**all** war types"
     await interaction.followup.send(
         embed=success_embed(
             f"War logs for **{row['name']}** (`{tag}`) → {target.mention} ({scope}).\n"
             "Every war hit will be posted there, plus a war-info embed at prep, war start, "
-            "the 18h/12h/6h marks, and war end."
+            f"the 18h/12h/6h marks, and war end.\nID: `{log_id}` — remove it with `/setup remove-war-logs`."
         )
     )

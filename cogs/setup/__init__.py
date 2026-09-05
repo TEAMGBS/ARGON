@@ -4,6 +4,8 @@ from discord.ext import commands as ext_commands
 
 from utils.resolver import clan_autocomplete
 
+from .commands.remove_war_logs import autocomplete as warlog_autocomplete
+from .commands.remove_war_logs import handle as remove_war_logs
 from .commands.war_logs import handle as war_logs
 
 _MANAGE = discord.Permissions(manage_guild=True)
@@ -33,6 +35,11 @@ class ServerSetup(ext_commands.Cog):
                 app_commands.autocomplete(clan=clan_autocomplete)(
                     app_commands.choices(type=_WAR_TYPE_CHOICES)(war_logs)
                 )
+            )
+        )
+        self.setup_group.command(name="remove-war-logs", description="Remove a clan's war log by its id")(
+            app_commands.describe(log_id="The war log to remove")(
+                app_commands.autocomplete(log_id=warlog_autocomplete)(remove_war_logs)
             )
         )
 
