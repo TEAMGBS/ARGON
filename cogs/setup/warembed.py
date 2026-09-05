@@ -1,15 +1,15 @@
 """Build the war-info embed and the per-attack feed lines.
 
-Attack lines look like:
-    `SABI v1` attacked `person` : ⭐⭐☆ `78%`
-    `SABI v1` defended person : ⭐⭐⭐ 100%
+Attack lines look like (with custom emojis):
+    {sword} `barbarian king` {vs} `CRAZY DIBYA` : {star}{star}{star} `100%`
+    {shield} `Swapnil` {vs} `ashen one` : {star}{star}{emptystar} `78%`
 """
 
 from __future__ import annotations
 
 import discord
 
-from utils.emojis import war_stars
+from utils.emojis import E_SHIELD_ICON, E_SWORD_ICON, E_VS, war_stars
 from utils.helpers import discord_relative
 
 # Colours per phase.
@@ -87,8 +87,11 @@ def attack_lines(war, since_order: int) -> tuple[list[str], int]:
         stars = war_stars(getattr(atk, "stars", 0))
         pct = int(round(getattr(atk, "destruction", 0) or 0))
         attacker, defender = atk.attacker_tag, atk.defender_tag
-        if attacker in our_tags:
-            lines.append(f"`{names.get(attacker, attacker)}` attacked `{names.get(defender, defender)}` : {stars} `{pct}%`")
-        elif defender in our_tags:
-            lines.append(f"`{names.get(defender, defender)}` defended {names.get(attacker, attacker)} : {stars} {pct}%")
+        if attacker in our_tags:  # our member attacked
+            ours, foe, marker = names.get(attacker, attacker), names.get(defender, defender), E_SWORD_ICON
+        elif defender in our_tags:  # our member was attacked
+            ours, foe, marker = names.get(defender, defender), names.get(attacker, attacker), E_SHIELD_ICON
+        else:
+            continue
+        lines.append(f"{marker} `{ours}` {E_VS} `{foe}` : {stars} `{pct}%`")
     return lines, max_order

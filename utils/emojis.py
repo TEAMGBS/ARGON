@@ -58,6 +58,11 @@ CUSTOM = {
     "TH16": "<:TH16:1545090411863736495>",
     "TH17": "<:TH17:1545090414770528286>",
     "TH18": "<:TH18:1545090419447173201>",
+    "emptystar": "<:emptystar:1545759771267956747>",
+    "shield": "<:shield:1545760486610440322>",
+    "star": "<:star:1545767567237324810>",
+    "sword": "<:sword:1545760484500840459>",
+    "vs": "<:vs:1545760485595684904>",
 }
 
 
@@ -164,8 +169,16 @@ E_WRONG = "❌"
 E_WARN = "⚠️"
 E_INFO = "ℹ️"
 
+# War-log icons (custom where uploaded, unicode fallback otherwise).
+E_SWORD_ICON = CUSTOM.get("sword", "🗡️")
+E_SHIELD_ICON = CUSTOM.get("shield", "🛡️")
+E_VS = CUSTOM.get("vs", "vs")
+E_STAR_FULL = CUSTOM.get("star", "⭐")
+E_STAR_EMPTY = CUSTOM.get("emptystar", "☆")
+
 
 def war_stars(count: int) -> str:
-    """A three-slot star row for a war attack or result."""
+    """A three-slot star row for a war attack or result, using the custom star
+    emojis (filled + empty), e.g. 2 stars -> star star emptystar."""
     count = max(0, min(3, count or 0))
-    return "⭐" * count + "☆" * (3 - count)
+    return E_STAR_FULL * count + E_STAR_EMPTY * (3 - count)
