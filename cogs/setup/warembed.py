@@ -23,7 +23,7 @@ ENDED_WIN = 0x57F287
 ENDED_LOSE = 0xED4245
 ENDED_TIE = 0xFEE75C
 
-E_PCT = CUSTOM.get("percentage", "💥")  # swap once a custom percentage emoji is added
+E_PCT = CUSTOM.get("Percentage", "💥")
 
 
 def _attacks_used(side) -> int:
