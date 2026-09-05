@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import discord
 
+from cogs.reminders.duration import format_minutes, parse_durations
 from database import clans as clans_db
 from database import warlogs as warlogs_db
 from utils.embeds import error_embed, success_embed
@@ -14,6 +15,7 @@ async def handle(
     interaction: discord.Interaction,
     clan: str,
     type: str | None = None,
+    time: str | None = None,
     channel: discord.TextChannel | None = None,
 ) -> None:
     await interaction.response.defer()
@@ -26,15 +28,24 @@ async def handle(
         )
         return
 
+    timings = None
+    if time:
+        try:
+            timings = parse_durations(time)
+        except ValueError as err:
+            await interaction.followup.send(embed=error_embed(str(err)))
+            return
+
     war_type = type or ""  # "" means every war type
     target = channel or interaction.channel
-    log_id = await warlogs_db.set_channel(interaction.guild_id, tag, target.id, war_type)
+    log_id = await warlogs_db.set_channel(interaction.guild_id, tag, target.id, war_type, timings)
 
     scope = f"**{war_type.upper()}** wars" if war_type else "**all** war types"
+    marks = ", ".join(format_minutes(m) for m in (timings or [1080, 720, 360]))
     await interaction.followup.send(
         embed=success_embed(
             f"War logs for **{row['name']}** (`{tag}`) → {target.mention} ({scope}).\n"
-            "Every war hit will be posted there, plus a war-info embed at prep, war start, "
-            f"the 18h/12h/6h marks, and war end.\nID: `{log_id}` — remove it with `/setup remove-war-logs`."
+            f"Every war hit is posted there, plus a war-info embed at prep, war start, "
+            f"{marks} left, and war end.\nID: `{log_id}` — edit with `/setup edit-war-logs`, remove with `/setup rmwar-log`."
         )
     )

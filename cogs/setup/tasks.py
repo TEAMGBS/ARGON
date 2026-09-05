@@ -15,12 +15,12 @@ import coc
 import discord
 from discord.ext import commands, tasks
 
+from cogs.reminders.duration import format_minutes
 from database import warlogs as warlogs_db
 
-from .warembed import attack_lines, build_war_embed
+from .warembed import BATTLE, ENDING, PREP, attack_lines, build_war_embed
 
 POLL_SECONDS = 60
-_THRESHOLDS = (18, 12, 6)
 
 
 def _war_key(war) -> str:
@@ -41,18 +41,24 @@ def _war_type(war) -> str:
     return "friendly" if getattr(war, "type", None) == "friendly" else "normal"
 
 
-def _applicable_events(war) -> list[str]:
-    """Phase events that are currently true for this war."""
+def _applicable(war, timings) -> list[tuple]:
+    """Events currently true for this war, as (key, label, color, ended).
+
+    `timings` are minutes-before-end marks (per war log) at which a phase embed
+    is posted, in addition to prep, war start, and war end.
+    """
     state = war.state
-    events: list[str] = []
+    events: list[tuple] = []
     if state == "preparation":
-        events.append("prep")
+        events.append(("prep", "Preparation Day", PREP, False))
     elif state == "inWar":
-        events.append("start")
-        hours_left = war.end_time.seconds_until / 3600
-        events += [f"{th}h" for th in _THRESHOLDS if hours_left <= th]
+        events.append(("start", "Battle Day — War Started", BATTLE, False))
+        minutes_left = war.end_time.seconds_until / 60
+        for minutes in sorted(set(timings), reverse=True):
+            if minutes_left <= minutes:
+                events.append((f"t{minutes}", f"Battle Day — {format_minutes(minutes)} left", ENDING, False))
     elif state == "warEnded":
-        events.append("end")
+        events.append(("end", "War Ended", BATTLE, True))
     return events
 
 
@@ -99,7 +105,6 @@ class WarLogScheduler(commands.Cog):
             return
 
         war_key = _war_key(war)
-        applicable = _applicable_events(war)
         _, current_max = attack_lines(war, since_order=0)  # only need the max attack order for seeding
         war_type = _war_type(war)
 
@@ -107,28 +112,32 @@ class WarLogScheduler(commands.Cog):
             # Skip guilds that limited their war logs to a different war type.
             if row["war_type"] and row["war_type"] != war_type:
                 continue
-            await self._process_guild(row["guild_id"], row["channel_id"], tag, war, war_key, applicable, current_max)
+            timings = list(row["timings"] or [])
+            await self._process_guild(row["guild_id"], row["channel_id"], tag, war, war_key, current_max, timings)
 
-    async def _process_guild(self, guild_id, channel_id, tag, war, war_key, applicable, current_max):
+    async def _process_guild(self, guild_id, channel_id, tag, war, war_key, current_max, timings):
+        applicable = _applicable(war, timings)
         progress = await warlogs_db.get_progress(guild_id, tag, war_key)
 
         if progress is None:
             # First time we see this war for this guild: seed so we don't back-fill
             # old attacks, but post one embed for the current phase.
-            posted = list(applicable)
+            posted = [key for key, *_ in applicable]
             await warlogs_db.set_progress(guild_id, tag, war_key, current_max, posted)
             if applicable:
-                await self._send(channel_id, embed=build_war_embed(war, applicable[-1]))
+                key, label, color, ended = applicable[-1]
+                await self._send(channel_id, embed=build_war_embed(war, label, color, ended))
             return
 
         posted = list(progress["events"] or [])
         last_order = progress["last_order"] or 0
 
         # New phase embeds.
-        new_events = [e for e in applicable if e not in posted]
-        for event in new_events:
-            await self._send(channel_id, embed=build_war_embed(war, event))
-            posted.append(event)
+        for key, label, color, ended in applicable:
+            if key in posted:
+                continue
+            await self._send(channel_id, embed=build_war_embed(war, label, color, ended))
+            posted.append(key)
 
         # New attack/defense feed lines.
         lines, new_max = attack_lines(war, since_order=last_order)

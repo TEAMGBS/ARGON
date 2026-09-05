@@ -140,12 +140,14 @@ CREATE TABLE IF NOT EXISTS war_logs (
     tag         TEXT NOT NULL,
     channel_id  BIGINT NOT NULL,
     war_type    TEXT NOT NULL DEFAULT '',  -- '' = all, else 'normal' | 'cwl' | 'friendly'
+    timings     INTEGER[] NOT NULL DEFAULT '{1080,720,360}',  -- minutes-left marks for the phase embed
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     PRIMARY KEY (guild_id, tag)
 );
 
 -- Added after the initial release; safe to re-run on an existing database.
 ALTER TABLE war_logs ADD COLUMN IF NOT EXISTS war_type TEXT NOT NULL DEFAULT '';
+ALTER TABLE war_logs ADD COLUMN IF NOT EXISTS timings INTEGER[] NOT NULL DEFAULT '{1080,720,360}';
 ALTER TABLE war_logs ADD COLUMN IF NOT EXISTS id TEXT;
 -- Backfill a short id for any rows created before the id column existed.
 UPDATE war_logs SET id = upper(substr(md5(random()::text || tag), 1, 6)) WHERE id IS NULL;

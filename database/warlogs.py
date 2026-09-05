@@ -18,28 +18,36 @@ async def _generate_id(conn) -> str:
     raise RuntimeError("Could not generate a unique war-log id")
 
 
-async def set_channel(guild_id: int, tag: str, channel_id: int, war_type: str = "") -> str:
+_DEFAULT_TIMINGS = [1080, 720, 360]  # 18h / 12h / 6h left
+
+
+async def set_channel(
+    guild_id: int, tag: str, channel_id: int, war_type: str = "", timings: list[int] | None = None
+) -> str:
     """Create or update a clan's war log. Returns its id (kept stable on update)."""
+    timings = timings if timings is not None else _DEFAULT_TIMINGS
     pool = await get_pool()
     async with pool.acquire() as conn:
         existing = await conn.fetchval("SELECT id FROM war_logs WHERE guild_id = $1 AND tag = $2", guild_id, tag)
         if existing:
             await conn.execute(
-                "UPDATE war_logs SET channel_id = $3, war_type = $4 WHERE guild_id = $1 AND tag = $2",
+                "UPDATE war_logs SET channel_id = $3, war_type = $4, timings = $5 WHERE guild_id = $1 AND tag = $2",
                 guild_id,
                 tag,
                 channel_id,
                 war_type,
+                timings,
             )
             return existing
         new_id = await _generate_id(conn)
         await conn.execute(
-            "INSERT INTO war_logs (id, guild_id, tag, channel_id, war_type) VALUES ($1, $2, $3, $4, $5)",
+            "INSERT INTO war_logs (id, guild_id, tag, channel_id, war_type, timings) VALUES ($1, $2, $3, $4, $5, $6)",
             new_id,
             guild_id,
             tag,
             channel_id,
             war_type,
+            timings,
         )
         return new_id
 
@@ -59,7 +67,7 @@ async def list_for_guild(guild_id: int):
     """War logs for a guild with the clan name joined in (for /setup and autocomplete)."""
     pool = await get_pool()
     return await pool.fetch(
-        """SELECT w.id, w.tag, w.channel_id, w.war_type, c.name
+        """SELECT w.id, w.tag, w.channel_id, w.war_type, w.timings, c.name
            FROM war_logs w
            LEFT JOIN clan_stores c ON c.guild_id = w.guild_id AND c.tag = w.tag
            WHERE w.guild_id = $1
@@ -76,7 +84,7 @@ async def all_tags() -> list[str]:
 
 async def channels_for_tag(tag: str):
     pool = await get_pool()
-    return await pool.fetch("SELECT guild_id, channel_id, war_type FROM war_logs WHERE tag = $1", tag)
+    return await pool.fetch("SELECT guild_id, channel_id, war_type, timings FROM war_logs WHERE tag = $1", tag)
 
 
 async def get_progress(guild_id: int, tag: str, war_key: str):
