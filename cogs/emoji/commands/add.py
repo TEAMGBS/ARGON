@@ -17,7 +17,10 @@ import re
 import aiohttp
 import discord
 
+from database import emojis as emojis_db
 from utils.embeds import error_embed
+
+from ..categories import normalize_category
 
 # <a:name:id> or <:name:id>
 _MENTION_RE = re.compile(r"<(a?):([A-Za-z0-9_]{2,32}):(\d{15,25})>")
@@ -65,7 +68,7 @@ async def _download(session: aiohttp.ClientSession, eid: int, animated: bool) ->
     return None
 
 
-async def handle(interaction: discord.Interaction, emojis: str) -> None:
+async def handle(interaction: discord.Interaction, emojis: str, category: str | None = None) -> None:
     # Acknowledge immediately - the owner check does an HTTP fetch and would
     # otherwise blow the 3s response window (error 10062: Unknown interaction).
     await interaction.response.defer(ephemeral=True, thinking=True)
@@ -84,13 +87,18 @@ async def handle(interaction: discord.Interaction, emojis: str) -> None:
         )
         return
 
-    existing = {e.name.lower() for e in await interaction.client.fetch_application_emojis()}
+    cat = normalize_category(category) or None
+    existing = {e.name.lower(): e for e in await interaction.client.fetch_application_emojis()}
 
-    added, skipped, failed = [], [], []
+    added, skipped, failed, categorized = [], [], [], 0
     async with aiohttp.ClientSession() as session:
         for name, eid, animated in parsed:
             if name.lower() in existing:
                 skipped.append(name)
+                # Re-adding with a category still (re)categorizes an existing emoji.
+                if cat:
+                    await emojis_db.set_category(existing[name.lower()].name, cat)
+                    categorized += 1
                 continue
             data = await _download(session, eid, animated)
             if data is None:
@@ -98,12 +106,18 @@ async def handle(interaction: discord.Interaction, emojis: str) -> None:
                 continue
             try:
                 created = await interaction.client.create_application_emoji(name=name, image=data)
-                existing.add(created.name.lower())
+                existing[created.name.lower()] = created
                 added.append(f"{created} {created.name}")
+                if cat:
+                    await emojis_db.set_category(created.name, cat)
+                    categorized += 1
             except discord.HTTPException as exc:
                 failed.append(f"{name} (`{eid}`) · {exc.text or exc}")
 
-    lines = [f"**Added {len(added)}** · **Skipped {len(skipped)}** · **Failed {len(failed)}**"]
+    head = f"**Added {len(added)}** · **Skipped {len(skipped)}** · **Failed {len(failed)}**"
+    if cat:
+        head += f" · **Categorized {categorized}** → _{cat}_"
+    lines = [head]
     if added:
         lines.append("\n**Added:** " + "  ".join(added)[:1500])
     if skipped:
